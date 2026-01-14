@@ -1,4 +1,4 @@
-import * as ImagePicker from "expo-image-picker";
+import { launchImageLibrary } from "react-native-image-picker";
 import {
   ArrowLeft,
   BookOpen,
@@ -10,7 +10,7 @@ import {
   Upload,
   X
 } from "lucide-react-native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Alert,
   Image,
@@ -20,6 +20,10 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  PermissionsAndroid,
+  Platform,
+  Linking,
+  Settings
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -30,6 +34,7 @@ export default function AddSubject() {
   const [loading, setLoading] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [thumbnail, setThumbnail] = useState(null);
+  const [hasPermission, setHasPermission] = useState(null);
 
   // Form state - consolidated into single object
   const [formData, setFormData] = useState({
@@ -60,30 +65,167 @@ export default function AddSubject() {
     "Other",
   ];
 
+  // Check Android permissions
+  const checkAndroidPermission = async () => {
+    if (Platform.OS !== 'android') return true;
+
+    try {
+      let permission;
+      
+      if (Platform.Version >= 33) {
+        // Android 13+ uses READ_MEDIA_IMAGES
+        permission = PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES;
+      } else {
+        // Android < 13 uses READ_EXTERNAL_STORAGE
+        permission = PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
+      }
+
+      const hasPermission = await PermissionsAndroid.check(permission);
+      setHasPermission(hasPermission);
+      return hasPermission;
+    } catch (err) {
+      console.warn("Permission check error:", err);
+      return false;
+    }
+  };
+
+  // Request Android permissions with better UX
+  const requestAndroidPermission = async () => {
+    try {
+      let permission;
+      let permissionTitle = "Photo Library Permission";
+      let permissionMessage = "App needs access to your photo library to select images";
+
+      if (Platform.Version >= 33) {
+        permission = PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES;
+      } else {
+        permission = PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
+      }
+
+      const result = await PermissionsAndroid.request(permission, {
+        title: permissionTitle,
+        message: permissionMessage,
+        buttonPositive: "Allow",
+        buttonNegative: "Deny",
+      });
+
+      const granted = result === PermissionsAndroid.RESULTS.GRANTED;
+      setHasPermission(granted);
+      return granted;
+    } catch (err) {
+      console.warn("Permission request error:", err);
+      return false;
+    }
+  };
+
+  // Open app settings
+  const openAppSettings = () => {
+    if (Platform.OS === 'ios') {
+      Linking.openURL("app-settings:");
+    } else {
+      Linking.openSettings();
+    }
+  };
+
+  // Show permission guide
+  const showPermissionGuide = () => {
+    Alert.alert(
+      "Permission Required",
+      "To select images, you need to grant photo library permission. Please: \n\n1. Go to Settings\n2. Tap on 'Apps'\n3. Find this app\n4. Tap 'Permissions'\n5. Allow 'Storage' or 'Photos' permission",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Open Settings", 
+          onPress: openAppSettings 
+        }
+      ]
+    );
+  };
+
   // Pick image from gallery
   const pickImage = async () => {
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [16, 9],
+      // For iOS, just launch the picker (iOS handles permissions automatically)
+      if (Platform.OS === 'ios') {
+        await launchImagePicker();
+        return;
+      }
+
+      // For Android, check and request permissions
+      const hasPermission = await checkAndroidPermission();
+      
+      if (!hasPermission) {
+        const granted = await requestAndroidPermission();
+        
+        if (!granted) {
+          // If permission denied, show guide
+          Alert.alert(
+            "Permission Denied",
+            "Photo library permission is required to select images. Would you like to grant permission in settings?",
+            [
+              { text: "Cancel", style: "cancel" },
+              { 
+                text: "Open Settings", 
+                onPress: openAppSettings 
+              }
+            ]
+          );
+          return;
+        }
+      }
+
+      // Permission granted, launch picker
+      await launchImagePicker();
+      
+    } catch (error) {
+      console.error("Error in pickImage:", error);
+      Alert.alert("Error", "Failed to access photo library. Please try again.");
+    }
+  };
+
+  // Actual image picker function
+  const launchImagePicker = async () => {
+    try {
+      const result = await launchImageLibrary({
+        mediaType: 'photo',
         quality: 0.8,
-        base64: true,
+        maxWidth: 1024,
+        maxHeight: 1024,
       });
 
-      if (!result.canceled) {
+      console.log("Image picker result:", result);
+
+      if (result.didCancel) {
+        console.log("User cancelled image picker");
+        return;
+      }
+
+      if (result.errorCode) {
+        console.error("Image picker error:", result.errorCode, result.errorMessage);
+        Alert.alert("Error", `Failed to pick image: ${result.errorMessage || 'Unknown error'}`);
+        return;
+      }
+
+      if (result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
-        const type = asset.uri.split('.').pop();
-        const imageUri = `data:image/${type};base64,${asset.base64}`;
-        console.log(imageUri.substring(0, 20));
+        const imageUri = asset.uri;
+        
+        console.log("Image selected:", imageUri);
         setThumbnail(imageUri);
         handleChange("thumbnail", imageUri);
       }
     } catch (error) {
-      console.error("Error picking image:", error);
-      Alert.alert("Error", "Failed to pick image");
+      console.error("Error launching image picker:", error);
+      throw error;
     }
   };
+
+  // Check permission on mount
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      checkAndroidPermission();
+    }
+  }, []);
 
   // Save teacher data function
   const saveTeacherData = async (data) => {
@@ -134,7 +276,7 @@ export default function AddSubject() {
       });
 
       if (result.success) {
-        navigation.navigate("teacherSubjectSuggestion");
+        navigation.navigate("TeacherSubjectSuggestion");
       } else {
         Alert.alert("Error", "Failed to save subject. Please try again.");
       }
@@ -273,6 +415,7 @@ export default function AddSubject() {
                   onChangeText={(value) => handleChange("description", value)}
                   multiline
                   textAlignVertical="top"
+                  maxLength={maxChars}
                 />
               </View>
               

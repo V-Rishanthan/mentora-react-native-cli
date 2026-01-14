@@ -16,8 +16,8 @@ import LoginScreen from "./src/screens/auth/Login";
 import RegisterScreen from "./src/screens/auth/RegisterScreen";
 import RegisterTeachersScreen from "./src/screens/auth/RegisterTeachers";
 import RegisterTeachers2 from "./src/screens/auth/RegisterTeachers2";
-import TeacherSubjectSuggestionScreen from "./src/screens/auth/TeacherSubjectSuggestion";
-import AddSubjectScreen from "./src/screens/auth/AddSubject";
+import TeacherSubjectSuggestion from "./src/screens/auth/TeacherSubjectSuggestion";
+import AddSubject from "./src/screens/auth/AddSubject";
 import CourseDetails from "./src/components/CourseDetails"
 
 // Import tab screens (create these if you don't have them)
@@ -93,8 +93,8 @@ function AppNavigator() {
           <Stack.Screen name="RegisterTeachers" component={RegisterTeachersScreen} />
           {/* <Stack.Screen name="RegisterTeachers_2" component={RegisterTeachers2Screen} /> */}
           <Stack.Screen name="RegisterTeachers_2" component={RegisterTeachers2} />
-          <Stack.Screen name="TeacherSubjectSuggestion" component={TeacherSubjectSuggestionScreen} />
-          <Stack.Screen name="AddSubject" component={AddSubjectScreen} />
+          <Stack.Screen name="TeacherSubjectSuggestion" component={TeacherSubjectSuggestion} />
+          <Stack.Screen name="AddSubject" component={AddSubject} />
          
         </>
       )}

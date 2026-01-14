@@ -10,6 +10,7 @@ import React from 'react'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../context/authContext'
 import Button from '../../components/Button'
+import {MoveRight} from "lucide-react-native"
 
 const Role = () => {
   const navigation = useNavigation() 
@@ -104,8 +105,10 @@ const Role = () => {
               </View>
               
               {/* Arrow */}
-              <View className="w-8 h-8 bg-primary/20 rounded-full items-center justify-center">
-                <Text className="text-primary text-lg">→</Text>
+              <View className="w-14 h-14 bg-primary/20 rounded-full items-center justify-center">
+                <Text className="text-primary text-lg">
+                  <MoveRight/>
+                </Text>
               </View>
             </TouchableOpacity>
 
@@ -145,8 +148,10 @@ const Role = () => {
               </View>
               
               {/* Arrow */}
-              <View className="w-8 h-8 bg-accent/20 rounded-full items-center justify-center">
-                <Text className="text-accent text-lg">→</Text>
+              <View className="w-14 h-14 bg-accent/20 rounded-full items-center justify-center">
+                <Text className="text-accent text-lg">
+                   <MoveRight/>
+                </Text>
               </View>
             </TouchableOpacity>
           </View>
