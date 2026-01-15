@@ -1,5 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+import { useEffect, useState,useRef } from "react";
 import {
   Alert,
   Image,
@@ -14,9 +14,26 @@ import {
 } from "../../utils/teacherRegistrationStore"; 
 import Button from "../../components/Button"; 
 import SectionTitle from "../../components/SectionTitle"; 
+import { Animated } from "react-native";
 
-export default function RegisterTeachers() {
+export default function RegisterTeachers2() {
   const navigation = useNavigation();
+
+  // Define the animated value
+        const fadeAnim = useRef(new Animated.Value(0)).current; 
+      
+        // 
+        useEffect(() => {
+          const animation = Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          });
+          animation.start();
+      
+          return () => animation.stop(); // This prevents the crash
+        }, []);
+  
 
   const [formData, setFormData] = useState({
     qualification: "",
@@ -96,10 +113,12 @@ export default function RegisterTeachers() {
   };
 
   return (
-    <View className="flex-1 px-6 mt-5 bg-secondary">
+    <Animated.View 
+    style={{opacity: fadeAnim }}
+    className="flex-1 px-6 mt-5 bg-secondary">
       <View className="w-full ">
         <Image
-          // ✅ In RN CLI keep image inside /src/assets or /assets and adjust path accordingly
+        
           source={require("../../assets/logo-2.png")}
           className="w-32 h-32"
           resizeMode="contain"
@@ -170,6 +189,6 @@ export default function RegisterTeachers() {
           />
         </View>
       </KeyboardAvoidingView>
-    </View>
+    </Animated.View>
   );
 }

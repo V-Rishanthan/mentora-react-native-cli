@@ -10,7 +10,7 @@ import {
   Upload,
   X
 } from "lucide-react-native";
-import { useState, useEffect } from "react";
+import { useState, useEffect,useRef } from "react";
 import {
   Alert,
   Image,
@@ -28,13 +28,34 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Button from "../../components/Button";
+import { Animated } from "react-native";
 
 export default function AddSubject() {
+
+  
+
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [thumbnail, setThumbnail] = useState(null);
   const [hasPermission, setHasPermission] = useState(null);
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+useEffect(() => {
+  const anim = Animated.timing(fadeAnim, {
+    toValue: 1,
+    duration: 800,
+    useNativeDriver: true,
+  });
+
+  anim.start();
+
+  return () => {
+    fadeAnim.stopAnimation();   // stop any running driver updates
+    fadeAnim.setValue(0);       // optional: reset to avoid reconnect issues
+  };
+}, [fadeAnim]);
 
   // Form state - consolidated into single object
   const [formData, setFormData] = useState({
@@ -298,7 +319,9 @@ export default function AddSubject() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <Animated.View 
+     style={{ opacity: fadeAnim }}
+     className="flex-1 bg-white">
       {/* Header */}
       <View className="bg-primary pt-12 px-6 pb-6">
         <View className="flex-row items-center mb-4">
@@ -569,6 +592,6 @@ export default function AddSubject() {
           </View>
         </View>
       </Modal>
-    </View>
+    </Animated.View>
   );
 }

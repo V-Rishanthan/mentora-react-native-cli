@@ -71,8 +71,8 @@ function AppNavigator() {
             // Teacher-specific screens
             <>
               <Stack.Screen name="TeacherHome" component={HomeScreen} />
-              <Stack.Screen name="TeacherSubjectSuggestion" component={TeacherSubjectSuggestionScreen} />
-              <Stack.Screen name="AddSubject" component={AddSubjectScreen} />
+              <Stack.Screen name="TeacherSubjectSuggestion" component={TeacherSubjectSuggestion} />
+              <Stack.Screen name="AddSubject" component={AddSubject} />
             </>
           ) : (
             // Student/regular user - Show tabs
@@ -92,7 +92,7 @@ function AppNavigator() {
           <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen name="RegisterTeachers" component={RegisterTeachersScreen} />
           {/* <Stack.Screen name="RegisterTeachers_2" component={RegisterTeachers2Screen} /> */}
-          <Stack.Screen name="RegisterTeachers_2" component={RegisterTeachers2} />
+          <Stack.Screen name="RegisterTeachers2" component={RegisterTeachers2} />
           <Stack.Screen name="TeacherSubjectSuggestion" component={TeacherSubjectSuggestion} />
           <Stack.Screen name="AddSubject" component={AddSubject} />
          

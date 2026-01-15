@@ -16,9 +16,9 @@ const Landing = () => {
   return (
      <View className="flex-1 bg-white">
          <StatusBar 
-                translucent 
-                backgroundColor="transparent" 
-                barStyle="dark-content" 
+          translucent 
+          backgroundColor="transparent" 
+          barStyle="dark-content" 
             />
       {/* Hero Image Section */}
       <View className="flex-1 mt-10">

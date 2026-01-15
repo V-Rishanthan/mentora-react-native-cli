@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState,useEffect } from 'react';
+import {Animated} from 'react-native'
 import {
   ActivityIndicator,
   Alert,
@@ -15,6 +16,22 @@ import { useNavigation } from "@react-navigation/native";
 import { ArrowLeft, EyeOff, Mail } from "lucide-react-native";
 
 const LoginScreen = () => {
+
+  // Define the animated value
+  const fadeAnim = useRef(new Animated.Value(0)).current; 
+
+  // 
+  useEffect(() => {
+    const animation = Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    });
+    animation.start();
+
+    return () => animation.stop(); // This prevents the crash
+  }, []);
+
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
   const { login, selectedRole, logout } = useAuth();
@@ -73,7 +90,9 @@ const LoginScreen = () => {
   };
 
   return (
-    <View className="flex-1 bg-primary">
+    <Animated.View
+     style={{ opacity: fadeAnim }}
+     className="flex-1 bg-primary">
       <StatusBar
         translucent
         backgroundColor="transparent"
@@ -176,7 +195,7 @@ const LoginScreen = () => {
           </View>
         </ScrollView>
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
