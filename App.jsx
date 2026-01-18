@@ -37,7 +37,8 @@ import TeacherNotification from "./src/screens/stack/TeacherNotification"
 import ChatLogin from "./src/components/ChatLogin"
 import ChatHome from "./src/components/ChatHome"
 import { MessageListPage } from "@zegocloud/zimkit-rn";
-import NewChatDialog from "./src/components/NewChatDialog";
+
+
 
 
 
@@ -188,7 +189,7 @@ function AppNavigator() {
       <Stack.Screen name="ChatLogin"  component={ChatLogin} />
       <Stack.Screen name="MessageListPage"  component={MessageListPage} />
       <Stack.Screen name="ChatHome"  component={ChatHome} />
-      {/* <Stack.Screen name="NewChatDialog"  component={NewChatDialog} /> */}
+
 
     </Stack.Navigator>
   );

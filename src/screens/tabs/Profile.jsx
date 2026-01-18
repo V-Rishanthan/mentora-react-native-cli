@@ -52,28 +52,54 @@ const ProfileScreen = () => {
     }
   }, [authUser, userProfile]);
 
-  const handleLogOut = async () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await logout();
-              // Navigation will be handled by AppNavigator based on auth state
-            } catch (error) {
-              console.log("Logout error:", error);
-              Alert.alert("Error", "Failed to logout");
-            }
-          }
+  // const handleLogOut = async () => {
+  //   Alert.alert(
+  //     "Logout",
+  //     "Are you sure you want to logout?",
+  //     [
+  //       { text: "Cancel", style: "cancel" },
+  //       {
+  //         text: "Logout",
+  //         style: "destructive",
+  //         onPress: async () => {
+  //           try {
+  //             await logout();
+  //             // Navigation will be handled by AppNavigator based on auth state
+  //           } catch (error) {
+  //             console.log("Logout error:", error);
+  //             Alert.alert("Error", "Failed to logout");
+  //           }
+  //         }
+  //       }
+  //     ]
+  //   );
+  // };
+
+
+  const handleLogOut = () => {
+  Alert.alert("Logout", "Are you sure you want to logout?", [
+    { text: "Cancel", style: "cancel" },
+    {
+      text: "Logout",
+      style: "destructive",
+      onPress: async () => {
+        const res = await logout();
+
+        if (res?.success) {
+          console.warn(" Logged out, go to Login");
+
+          //  Force navigation
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "Login" }],
+          });
+        } else {
+          Alert.alert("Error", res?.error || "Failed to logout");
         }
-      ]
-    );
-  };
+      },
+    },
+  ]);
+};
 
   const handleBack = () => {
     navigation.goBack();

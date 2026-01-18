@@ -30,6 +30,10 @@ export const AuthContextProvider = ({ children }) => {
   const [courseData, setCourseData] = useState([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [username, setUsername] = useState(null);
+
+  // chat id
+  const [chatUserID, setChatUserID] = useState(null);
 
   useEffect(() => {
     // Check if user is already logged in from AsyncStorage
@@ -69,6 +73,7 @@ export const AuthContextProvider = ({ children }) => {
 
       if (firebaseUser) {
         const profile = await fetchUserProfile(firebaseUser.uid);
+
         const userID = firebaseUser.uid; //  Firebase UID
         const userName = profile?.username || firebaseUser.email || 'User';
 
@@ -106,6 +111,12 @@ export const AuthContextProvider = ({ children }) => {
 
     return unsub;
   }, []);
+
+  // Generate chat id
+  const generateChatId = () => {
+    // 6-digit numeric (100000 - 999999)
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
 
   // Function to fetch all courses (teachers) data
   const fetchCourseData = async () => {
@@ -167,6 +178,11 @@ export const AuthContextProvider = ({ children }) => {
         const profileData = userDoc.data();
         console.log('User profile found:', profileData);
         setUserProfile(profileData);
+        setUsername(profileData?.username || null); //  keep username synced
+
+        // display the username only
+        console.log('🔥 Username from profile:', profileData?.username || null);
+
         return profileData;
       } else {
         console.log('No user profile found in Firestore');
@@ -219,26 +235,53 @@ export const AuthContextProvider = ({ children }) => {
   };
 
   // Logout
+  // const logout = async () => {
+  //   try {
+  //     // Sign out from Firebase Authentication
+  //     await signOut(auth);
+
+  //     // Clear AsyncStorage
+  //     await AsyncStorage.removeItem('@user');
+
+  //     setUser(null);
+  //     setIsAuthenticated(false);
+  //     setUserProfile(null);
+  //     setSelectedRole(null);
+
+  //     return { success: true, message: 'Logged out successfully' };
+  //   } catch (error) {
+  //     console.error('Logout error:', error);
+  //     const userFriendlyMessage = getAuthErrorMessage(error.code);
+  //     return {
+  //       success: false,
+  //       error: userFriendlyMessage || 'Failed to log out. Please try again.',
+  //     };
+  //   }
+  // };
+
   const logout = async () => {
     try {
-      // Sign out from Firebase Authentication
+      //  1) Sign out from Firebase
       await signOut(auth);
 
-      // Clear AsyncStorage
+      //  2) Clear local storage
       await AsyncStorage.removeItem('@user');
 
+      //  3) Clear all states
       setUser(null);
       setIsAuthenticated(false);
       setUserProfile(null);
       setSelectedRole(null);
+      setUsername(null);
+
+      console.warn(' Logout success');
 
       return { success: true, message: 'Logged out successfully' };
     } catch (error) {
-      console.error('Logout error:', error);
-      const userFriendlyMessage = getAuthErrorMessage(error.code);
+      console.log('Logout error:', error);
       return {
         success: false,
-        error: userFriendlyMessage || 'Failed to log out. Please try again.',
+        error: getAuthErrorMessage(error.code) || 'Failed to log out',
       };
     }
   };
@@ -260,6 +303,7 @@ export const AuthContextProvider = ({ children }) => {
       );
 
       console.log('Response.user', response?.user);
+      const newChatId = generateChatId();
 
       // Create user document in Firestore
       await setDoc(doc(db, 'users', response?.user?.uid), {
@@ -269,8 +313,12 @@ export const AuthContextProvider = ({ children }) => {
         subjectInterest: subject,
         role: role,
         userId: response?.user?.uid,
+        chatId: newChatId,
         createdAt: new Date().toISOString(),
       });
+
+      // store in context state too chat id
+      setChatUserID(newChatId);
 
       // Save to AsyncStorage
       await AsyncStorage.setItem(
@@ -310,6 +358,7 @@ export const AuthContextProvider = ({ children }) => {
       );
 
       console.log('Firebase user created:', response.user.uid);
+      const newChatId = generateChatId();
 
       // 2. Create teacher document in Firestore
       await setDoc(doc(db, 'users', response.user.uid), {
@@ -335,10 +384,13 @@ export const AuthContextProvider = ({ children }) => {
         totalClasses: 0,
         availableForHire: true,
         userId: response.user.uid,
+        chatId: newChatId,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
 
+      // store in context state too chat id
+      setChatUserID(newChatId);
       // Save to AsyncStorage
       await AsyncStorage.setItem(
         '@user',
@@ -418,6 +470,9 @@ export const AuthContextProvider = ({ children }) => {
         fetchCourseData,
         courseData,
         loadingCourses,
+
+        // Testing
+        username,
       }}
     >
       {children}

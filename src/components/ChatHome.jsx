@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Text,
   View,
@@ -6,11 +6,12 @@ import {
   TextInput,
   Alert,
   StatusBar,
-} from "react-native";
-import { useRoute, useNavigation } from "@react-navigation/native";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from 'react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Modal from 'react-native-modal';
 
-import Clipboard from "@react-native-clipboard/clipboard";
+import Clipboard from '@react-native-clipboard/clipboard';
 import {
   ArrowLeft,
   Plus,
@@ -19,23 +20,58 @@ import {
   Settings,
   MoreHorizontal,
   Fingerprint,
-} from "lucide-react-native";
+  X,
+} from 'lucide-react-native';
 
-import { ConversationList } from "@zegocloud/zimkit-rn";
-import NewChatDialog from "../components/NewChatDialog";
+import { ConversationList } from '@zegocloud/zimkit-rn';
 
 const ChatHome = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const { userID, userName } = route.params || {};
 
-  const [open, setOpen] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [userIdInput, setUserIdInput] = useState('');
 
-  const initial = (userName || "U").trim().charAt(0).toUpperCase();
+  const initial = (userName || 'U').trim().charAt(0).toUpperCase();
 
   const copyToClipboard = () => {
-    Clipboard.setString(userID || "");
-    Alert.alert("Success", "User ID copied to clipboard!");
+    Clipboard.setString(userID || '');
+    Alert.alert('Success', 'User ID copied to clipboard!');
+  };
+
+  const handleStartChat = () => {
+    const targetUserId = userIdInput.trim();
+
+    if (!targetUserId) {
+      Alert.alert('Missing', 'Please enter a user ID');
+      return;
+    }
+
+    if (targetUserId === userID) {
+      Alert.alert("Invalid", "You can't chat with yourself.");
+      return;
+    }
+
+    //  Open 1-to-1 chat (peer chat)
+    navigation.navigate('MessageListPage', {
+      conversationID: targetUserId,          
+      conversationName: targetUserId,
+      conversationType: 0,                  
+      // optional app bar actions not required; ZIMKit already handles back button
+      // but you can keep it if you want:
+      appBarActions: [
+        {
+          icon: 'goBack',
+          onPressed: () => navigation.goBack(),
+        },
+      ],
+    });
+
+    console.log('Starting chat with:', targetUserId);
+
+    setIsModalVisible(false);
+    setUserIdInput('');
   };
 
   return (
@@ -43,12 +79,9 @@ const ChatHome = () => {
       <StatusBar barStyle="light-content" backgroundColor="#4F46E5" />
 
       {/* Background Header Decoration */}
-      <View
-        className="absolute top-0 left-0 right-0 h-80 bg-primary"
-        style={{ borderBottomLeftRadius: 60, borderBottomRightRadius: 60 }}
-      />
+      <View className="absolute top-0 left-0 right-0 h-80 bg-primary rounded-b-[60px]" />
 
-      < View className="flex-1">
+      <SafeAreaView className="flex-1">
         {/* Top Navbar */}
         <View className="px-6 py-2 flex-row items-center justify-between">
           <TouchableOpacity
@@ -81,7 +114,7 @@ const ChatHome = () => {
 
               <View className="ml-4 flex-1">
                 <Text className="text-gray-900 text-lg font-bold leading-tight">
-                  {userName || "Chat User"}
+                  {userName || 'Chat User'}
                 </Text>
 
                 <TouchableOpacity
@@ -90,7 +123,7 @@ const ChatHome = () => {
                 >
                   <Fingerprint size={12} color="#6366f1" />
                   <Text className="text-gray-500 text-[10px] font-bold ml-1.5 uppercase tracking-tighter">
-                    ID: {userID || "0000"}
+                    ID: {userID || '0000'}
                   </Text>
                   <Copy size={10} color="#94A3B8" className="ml-2" />
                 </TouchableOpacity>
@@ -125,8 +158,9 @@ const ChatHome = () => {
               </View>
 
               <TouchableOpacity
-                onPress={() => setOpen(true)}
-                className="bg-primary w-12 h-12 rounded-2xl items-center justify-center shadow-xl shadow-indigo-300"
+                onPress={() => setIsModalVisible(true)}
+                activeOpacity={0.7}
+                className="bg-primary w-14 h-14 rounded-2xl items-center justify-center shadow-xl shadow-indigo-300"
               >
                 <Plus size={28} color="white" />
               </TouchableOpacity>
@@ -138,10 +172,72 @@ const ChatHome = () => {
             <ConversationList />
           </View>
         </View>
-      </View>
+      </SafeAreaView>
 
-      {/* Modal - placed outside SafeAreaView */}
-      <NewChatDialog open={open} setOpen={setOpen} />
+      {/* Modal */}
+      <Modal
+        isVisible={isModalVisible}
+        onBackdropPress={() => setIsModalVisible(false)}
+        onBackButtonPress={() => setIsModalVisible(false)}
+        animationIn="fadeIn"
+        animationOut="fadeOut"
+        backdropOpacity={0.4}
+        style={{ margin: 0, justifyContent: 'center', alignItems: 'center' }}
+      >
+        <View className="w-11/12 max-w-sm bg-white rounded-2xl">
+          {/* Modal Header */}
+          <View className="p-5 border-b border-gray-100">
+            <View className="flex-row items-center justify-between">
+              <Text className="text-xl font-bold text-gray-900">
+                New Message
+              </Text>
+              <TouchableOpacity
+                onPress={() => setIsModalVisible(false)}
+                className="p-2"
+              >
+                <X size={20} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            <Text className="text-gray-500 text-sm mt-1">
+              Enter user ID to start chatting
+            </Text>
+          </View>
+
+          {/* Modal Body */}
+          <View className="p-5">
+            <Text className="text-gray-700 font-medium mb-2">User ID</Text>
+            <TextInput
+              placeholder="Enter user ID"
+              placeholderTextColor="#9CA3AF"
+              className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 mb-6"
+              autoCapitalize="none"
+              autoCorrect={false}
+              value={userIdInput}
+              onChangeText={setUserIdInput}
+            />
+
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={() => setIsModalVisible(false)}
+                className="flex-1 border border-gray-300 py-3 rounded-xl items-center"
+                activeOpacity={0.7}
+              >
+                <Text className="text-gray-700 font-medium">Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleStartChat}
+                className="flex-1 bg-primary py-3 rounded-xl items-center"
+                activeOpacity={0.7}
+                disabled={!userIdInput.trim()}
+                style={{ opacity: userIdInput.trim() ? 1 : 0.5 }}
+              >
+                <Text className="text-white font-medium">Start Chat</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
