@@ -3,6 +3,8 @@ import { ArrowLeft, BookOpen, Clock, User } from "lucide-react-native";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+
+
 export default function CourseDetails({ navigation, route }) {
   // In RN CLI + React Navigation, data comes from route.params
   const { course: courseParam } = route.params || {};
@@ -205,7 +207,7 @@ export default function CourseDetails({ navigation, route }) {
           <TouchableOpacity
             className="bg-primary py-4 rounded-xl mb-10 items-center"
             activeOpacity={0.9}
-            onPress={() => navigation.navigate("Chat", { courseId: course.id })}
+            onPress={() => navigation.navigate("ChatLogin")}
           >
             <Text className="text-white text-lg font-outfit-semibold">Chat Now</Text>
           </TouchableOpacity>

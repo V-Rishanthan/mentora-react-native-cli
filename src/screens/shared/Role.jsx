@@ -11,10 +11,38 @@ import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../context/authContext'
 import Button from '../../components/Button'
 import {MoveRight} from "lucide-react-native"
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { clearTeacherData, getTeacherData } from "../../utils/teacherRegistrationStore"; // Import storage utils
+
 
 const Role = () => {
   const navigation = useNavigation() 
   const { setGlobalRole } = useAuth()
+
+//   const debugAndClearTeacherStorage = async () => {
+//   try {
+//     // 🔍 BEFORE clear
+//     const before = await AsyncStorage.getItem('teacher_registration_data');
+//     console.log(
+//       '🧠 Teacher data BEFORE clear:',
+//       before ? JSON.parse(before) : 'No data'
+//     );
+
+//     // 🧹 CLEAR
+//     await clearTeacherData();
+
+//     // 🔍 AFTER clear
+//     const after = await AsyncStorage.getItem('teacher_registration_data');
+//     console.log(
+//       '🧹 Teacher data AFTER clear:',
+//       after ? JSON.parse(after) : 'Storage empty ✅'
+//     );
+//   } catch (err) {
+//     console.error('❌ Debug clear error:', err);
+//   }
+// };
+
 
   const handleStudentRole = () => {
     setGlobalRole("student")
@@ -22,10 +50,14 @@ const Role = () => {
    navigation.push("Login");
   }
 
-  const handleTeacherRole = () => {
+  const handleTeacherRole = async () => {
     setGlobalRole("teacher")
     console.log("Role set to: teacher")
     navigation.push('RegisterTeachers')
+
+    // DEBUG + CLEAR STORAGE
+    // await debugAndClearTeacherStorage();
+    // navigation.push('TeacherSubjectSuggestion')
   }
 
   const handleLogin = () => {

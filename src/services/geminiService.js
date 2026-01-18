@@ -2,7 +2,8 @@ import { GoogleGenAI } from '@google/genai';
 
 // 1. Initialize the client
 const ai = new GoogleGenAI({
-  apiKey: 'AIzaSyDmAcZiMqyEoXFh0V3t4_k1ZikCe2Rs1kE',
+  // apiKey: 'AIzaSyDmAcZiMqyEoXFh0V3t4_k1ZikCe2Rs1kE',
+  apiKey: 'AIzaSyA6FHSc_Usc2kn_A3Iwh2cdz_Q4irO1oME',
 });
 
 /**
@@ -11,6 +12,7 @@ const ai = new GoogleGenAI({
 export const getGeminiResponse = async (
   prompt,
   modelName = 'gemini-3-flash-preview',
+  // modelName = 'gemini-2.0-flash',
 ) => {
   try {
     // 2. The new SDK calls generateContent through the models object

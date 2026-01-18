@@ -1,4 +1,6 @@
 import { launchImageLibrary } from "react-native-image-picker";
+
+
 import {
   ArrowLeft,
   BookOpen,
@@ -27,6 +29,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {saveTeacherData} from "../../utils/teacherRegistrationStore"
 import Button from "../../components/Button";
 import { Animated } from "react-native";
 
@@ -249,19 +252,19 @@ useEffect(() => {
   }, []);
 
   // Save teacher data function
-  const saveTeacherData = async (data) => {
-    try {
-      const existingData = await AsyncStorage.getItem('@teacher_registration_data');
-      const parsedData = existingData ? JSON.parse(existingData) : {};
+  // const saveTeacherData = async (data) => {
+  //   try {
+  //     const existingData = await AsyncStorage.getItem('@teacher_registration_data');
+  //     const parsedData = existingData ? JSON.parse(existingData) : {};
       
-      const updatedData = { ...parsedData, ...data };
-      await AsyncStorage.setItem('@teacher_registration_data', JSON.stringify(updatedData));
-      return { success: true };
-    } catch (error) {
-      console.error("Error saving teacher data:", error);
-      return { success: false, error };
-    }
-  };
+  //     const updatedData = { ...parsedData, ...data };
+  //     await AsyncStorage.setItem('@teacher_registration_data', JSON.stringify(updatedData));
+  //     return { success: true };
+  //   } catch (error) {
+  //     console.error("Error saving teacher data:", error);
+  //     return { success: false, error };
+  //   }
+  // };
 
   // Handle submit
   const handleSubmit = async () => {
@@ -285,22 +288,19 @@ useEffect(() => {
 
     setLoading(true);
 
-    try {
+     try {
       // Save to AsyncStorage
-      const result = await saveTeacherData({
+      await saveTeacherData({
         subjectName: formData.subjectName.trim(),
         category: formData.category.trim(),
         duration: formData.duration,
         description: formData.description.trim(),
         thumbnail: formData.thumbnail,
+        // Add timestamp for uniqueness
         subjectAddedAt: new Date().toISOString(),
       });
 
-      if (result.success) {
-        navigation.navigate("TeacherSubjectSuggestion");
-      } else {
-        Alert.alert("Error", "Failed to save subject. Please try again.");
-      }
+     navigation.push("TeacherSubjectSuggestion");
 
     } catch (error) {
       console.error("Error saving subject:", error);

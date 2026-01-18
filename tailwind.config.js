@@ -28,6 +28,14 @@ module.exports = {
           700: '#4E5050', // Charcoal Slate
           800: '#444546', // Deep Carbon
         },
+        // Brand Specific Colors from the image
+        brand: {
+          orange: '#FFD7C2', // Main course card background
+          yellow: '#FFF4D6', // Lesson 1 background
+          blue: '#E3F2FF', // Lesson 2 background
+          purple: '#EBE9FF', // Lesson 3 background
+          pink: '#FFE5F1', // Lesson 4 background
+        },
       },
     },
   },

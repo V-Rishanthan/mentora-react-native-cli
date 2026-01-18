@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { saveTeacherData } from "../../utils/teacherRegistrationStore";
+import { saveTeacherData ,clearTeacherData} from "../../utils/teacherRegistrationStore";
 import { Animated } from "react-native";
 
 
@@ -288,9 +288,7 @@ const handleContinue = async () => {
                   Sign In
                 </Text>
               </TouchableOpacity>
-            </View>
-
-          
+            </View>        
           </View>
         </Animated.View>
       </KeyboardAvoidingView>

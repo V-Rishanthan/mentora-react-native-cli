@@ -1,18 +1,25 @@
 import { useNavigation } from "@react-navigation/native";
-import { Star, Timer } from "lucide-react-native";
+import { Star, Timer, BookOpen } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Image,
+  ImageBackground,
   Text,
   TouchableOpacity,
   View,
+  Dimensions,
 } from "react-native";
 import { useAuth } from "../context/authContext";
 
+const { width } = Dimensions.get('window');
+// const CARD_WIDTH = width * 0.82; // Card takes up 82% of screen width
+const CARD_WIDTH = width * 0.65;   // 1 full + next half peek
+const SPACING = 16;               // gap between cards
+const SIDE_PADDING = 20;          // left/right padding
+
 export default function CourseCard() {
-  const navigation = useNavigation(); //  rename to navigation
+  const navigation = useNavigation();
   const { fetchCourseData, loadingCourses } = useAuth();
 
   const [courses, setCourses] = useState([]);
@@ -24,7 +31,6 @@ export default function CourseCard() {
       const result = await fetchCourseData();
       if (result.success) {
         setCourses(result.data);
-
         const uniqueCategories = [
           "All",
           ...new Set(result.data.map((c) => c.category).filter(Boolean)),
@@ -40,126 +46,132 @@ export default function CourseCard() {
       ? courses
       : courses.filter((c) => c.category === selectedCategory);
 
-  //  React Navigation way
   const handleCoursePress = (course) => {
-    navigation.push("CourseDetails", { course }); // pass object directly
+    navigation.push("CourseDetails", { course });
   };
 
   const renderCourse = ({ item }) => {
-    const thumbUri =
-      typeof item.thumbnail === "string"
-        ? item.thumbnail
-        : item.thumbnail?.uri;
+    const thumbUri = typeof item.thumbnail === "string" 
+      ? item.thumbnail 
+      : item.thumbnail?.uri;
 
     return (
       <TouchableOpacity
-        className="bg-white rounded-xl p-4 mb-4"
-        activeOpacity={0.7}
+        className="mr-5 mb-20 rounded-[32px] overflow-hidden shadow-lg bg-gray-200"
+        style={{ 
+            height: 240, 
+            width: CARD_WIDTH, // Fixed width for slider
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.1,
+            shadowRadius: 10,
+        }} 
+        activeOpacity={0.9}
         onPress={() => handleCoursePress(item)}
       >
-        <View className="flex-row">
-          {/* Thumbnail */}
-          <View className="mr-4">
-            {thumbUri ? (
-              <Image
-                source={{ uri: thumbUri }}
-                className="w-32 h-32 rounded-xl"
-                resizeMode="cover"
-              />
-            ) : (
-              <Image
-                source={require("../assets/course/course-1.png")}
-                className="w-32 h-32 rounded-xl"
-                resizeMode="cover"
-              />
-            )}
-          </View>
+        <ImageBackground
+          source={thumbUri ? { uri: thumbUri } : require("../assets/course/course-1.png")}
+          className="w-full h-full"
+          resizeMode="cover"
+        >
+          <View className="flex-1 bg-black/30 justify-end p-6">
+            <View className="absolute top-5 left-5">
+              {item.category && (
+                <View className="bg-white/95 px-3 py-1.5 rounded-xl">
+                  <Text className="text-[10px] text-primary font-black uppercase tracking-widest">
+                    {item.category}
+                  </Text>
+                </View>
+              )}
+            </View>
 
-          {/* Details */}
-          <View className="flex-1">
-            {item.category && (
-              <View className="self-start bg-green-50 px-3 py-1.5 rounded-full mb-2">
-                <Text className="text-xs text-green-800 font-medium">
-                  {item.category}
-                </Text>
+            <View>
+              <Text 
+                className="text-white text-xl font-bold leading-tight mb-3"
+                numberOfLines={2}
+              >
+                {item.subjectName}
+              </Text>
+
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center">
+                  <View className="flex-row items-center mr-4">
+                    <Timer size={14} color="#FFFFFF" strokeWidth={2.5} />
+                    <Text className="text-white text-[11px] font-bold ml-1">2h 30m</Text>
+                  </View>
+                  <View className="flex-row items-center">
+                    <BookOpen size={14} color="#FFFFFF" strokeWidth={2.5} />
+                    <Text className="text-white text-[11px] font-bold ml-1">12 Lessons</Text>
+                  </View>
+                </View>
+
+                <View className="flex-row items-center bg-white/20 px-2 py-1 rounded-lg">
+                   <Star size={12} color="#FFD700" fill="#FFD700" />
+                   <Text className="text-white text-[10px] font-bold ml-1">4.8</Text>
+                </View>
               </View>
-            )}
-
-            <Text
-              className="font-outfit-regular text-base text-grayPro-800 mb-1"
-              numberOfLines={2}
-            >
-              {item.subjectName}
-            </Text>
-
-            <Text
-              className="text-sm text-grayPro-500 font-outfit-regular mb-3"
-              numberOfLines={3}
-            >
-              {(item.description || "").substring(0, 50)}
-            </Text>
-
-            <View className="flex-row justify-between">
-              <Star size={16} color={"#5C5E5E"} />
-              <Timer size={16} color={"#5C5E5E"} />
             </View>
           </View>
-        </View>
+        </ImageBackground>
       </TouchableOpacity>
     );
   };
 
   if (loadingCourses) {
     return (
-      <View className="flex-1 justify-center items-center bg-gray-50">
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text className="mt-4 text-gray-600">Loading courses...</Text>
+      <View className="h-[240px] justify-center items-center">
+        <ActivityIndicator size="small" color="#8681FB" />
       </View>
     );
   }
 
   return (
-    <FlatList
-      data={filteredCourses}
-      renderItem={renderCourse}
-      keyExtractor={(item) => String(item.id)} //  safe
-      contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
-      ListHeaderComponent={
-        <View className="p-4 bg-white rounded-xl mb-4">
-          <FlatList
-            data={categories}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                className={`mr-3 px-4 py-2 rounded-full ${
-                  selectedCategory === item ? "bg-primary" : "bg-grayPro-100"
+    <View>
+      {/* Category Filter - Keep this at the top */}
+      <View className="mb-4">
+        <FlatList
+          data={categories}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item}
+          contentContainerStyle={{ paddingHorizontal: 20 }}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              className={`mr-3 px-5 py-2 rounded-full border ${
+                selectedCategory === item 
+                  ? "bg-primary border-primary" 
+                  : "bg-white border-gray-100"
+              }`}
+              onPress={() => setSelectedCategory(item)}
+            >
+              <Text
+                className={`font-bold text-xs ${
+                  selectedCategory === item ? "text-white" : "text-gray-400"
                 }`}
-                onPress={() => setSelectedCategory(item)}
               >
-                <Text
-                  className={`font-medium ${
-                    selectedCategory === item ? "text-white" : "text-grayPro-500"
-                  }`}
-                >
-                  {item}
-                </Text>
-              </TouchableOpacity>
-            )}
-          />
-          <Text className="text-grayPro-500 text-sm mt-2">
-            Showing {filteredCourses.length} of {courses.length} courses
-            {selectedCategory !== "All" && ` in "${selectedCategory}"`}
-          </Text>
-        </View>
-      }
-      ListEmptyComponent={() => (
-        <View className="items-center justify-center py-10">
-          <Text className="text-gray-500 text-lg">No courses found</Text>
-          <Text className="text-gray-400 mt-2">No data available yet</Text>
-        </View>
-      )}
-    />
+                {item}
+              </Text>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+
+      {/* The Main Horizontal Slider */}
+      <FlatList
+        data={filteredCourses}
+        renderItem={renderCourse}
+        horizontal // Enables horizontal scrolling
+        showsHorizontalScrollIndicator={false} // Hides the bar
+        keyExtractor={(item) => String(item.id)}
+        snapToInterval={CARD_WIDTH + 20} // Snap effect (Card width + margin)
+        decelerationRate="fast"
+        contentContainerStyle={{ paddingRight: width - (SIDE_PADDING + CARD_WIDTH), paddingRight: 20 }}
+        ListEmptyComponent={() => (
+          <View style={{ width: width - 40 }} className="items-center justify-center py-10">
+            <Text className="text-gray-400">No courses in this category</Text>
+          </View>
+        )}
+      />
+    </View>
   );
 }

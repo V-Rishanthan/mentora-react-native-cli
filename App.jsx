@@ -1,5 +1,6 @@
 // App.js
 import React, { useEffect } from "react";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, ActivityIndicator } from "react-native";
 import "./global.css";
 import { NavigationContainer } from "@react-navigation/native";
@@ -7,6 +8,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthContextProvider, useAuth } from "./src/context/authContext";
+import { Home, BookOpen, Search, User,MessageSquareMore } from 'lucide-react-native';
 
 // Import screens
 import WelcomeScreen from "./src/screens/shared/WelcomeScreen";
@@ -24,29 +26,110 @@ import CourseDetails from "./src/components/CourseDetails"
 import HomeScreen from "./src/screens/tabs/Home";
 import ProfileScreen from "./src/screens/tabs/Profile";
 import SearchScreen from "./src/screens/tabs/Search";
-import CoursesScreen from "./src/screens/tabs/Courses";
+import ChatScreen from "./src/screens/tabs/Chat";
+
+
+// teacher tab
+import TeacherHome from "./src/screens/stack/TeacherHome"
+import TeacherNotification from "./src/screens/stack/TeacherNotification"
+
+// Testing Componets
+import ChatLogin from "./src/components/ChatLogin"
+import ChatHome from "./src/components/ChatHome"
+import { MessageListPage } from "@zegocloud/zimkit-rn";
+import NewChatDialog from "./src/components/NewChatDialog";
+
+
+
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 // Tab Navigator (Equivalent to Expo's (tabs))
 function TabNavigator() {
+  // const insets = useSafeAreaInsets();
   return (
+ 
+  
     <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: '#fff',
-          borderTopColor: '#e5e5e5',
-        },
-      }}
-    >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Courses" component={CoursesScreen} />
-      <Tab.Screen name="Search" component={SearchScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
-    </Tab.Navigator>
-  );
+    screenOptions={({ route }) => ({
+    headerShown: false,
+    tabBarShowLabel: false, // Cleaner, more premium look without text
+    tabBarActiveTintColor: "#FFFFFF",
+    tabBarInactiveTintColor: "rgba(255,255,255,0.5)",
+
+    tabBarStyle: {
+      position: "absolute",
+      left: 20,
+      right: 20,
+      // bottom: 1 + insets.bottom,
+      height: 75,
+      // borderRadius: 35,
+      backgroundColor: "#8681FB", // Your primary purple
+      borderTopWidth: 0,
+      
+      // Sophisticated Shadow
+      shadowColor: "#8681FB",
+      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: 0.3,
+      shadowRadius: 16,
+      elevation: 15,
+      paddingTop: 12,
+    },
+
+    tabBarIcon: ({ focused, color }) => {
+      let IconComponent;
+      if (route.name === "Home") IconComponent = Home;
+      else if (route.name === "Chat") IconComponent = MessageSquareMore;
+      else if (route.name === "Search") IconComponent = Search;
+      else if (route.name === "Profile") IconComponent = User;
+
+      return (
+        <View className="items-center justify-center">
+          {/* 1. Animated Glow Background */}
+          <View
+            className={`absolute w-14 h-14 rounded-full items-center justify-center ${
+              focused ? "bg-white/10" : "bg-transparent"
+            }`}
+            style={{
+              // Adds a subtle 'bloom' effect when selected
+              transform: [{ scale: focused ? 1 : 0.8 }]
+            }}
+          />
+
+          {/* 2. Floating Icon with Dynamic Weight */}
+          <View
+            style={{
+              transform: [{ translateY: focused ? -5 : 0 }], // Icon lifts up when active
+            }}
+          >
+            <IconComponent
+              size={24}
+              color={color}
+              strokeWidth={focused ? 2.8 : 2.0}
+            />
+          </View>
+
+          {/* 3. Minimalist "Active" Pill */}
+          {focused && (
+            <View 
+              className="w-8 h-1 bg-white rounded-full absolute -bottom-3" 
+              style={{ shadowColor: '#fff', shadowOpacity: 0.5, shadowRadius: 4 }}
+            />
+          )}
+        </View>
+      );
+    },
+  })}
+>
+  <Tab.Screen name="Home" component={HomeScreen} />
+  <Tab.Screen name="Chat" component={ChatScreen} />
+  <Tab.Screen name="Search" component={SearchScreen} />
+  <Tab.Screen name="Profile" component={ProfileScreen} />
+
+</Tab.Navigator>
+);
+ 
 }
 
 // Main App Navigator with Auth Logic
@@ -70,9 +153,10 @@ function AppNavigator() {
           {userProfile?.role === 'teacher' ? (
             // Teacher-specific screens
             <>
-              <Stack.Screen name="TeacherHome" component={HomeScreen} />
+              <Stack.Screen name="TeacherHome" component={TeacherHome} />
               <Stack.Screen name="TeacherSubjectSuggestion" component={TeacherSubjectSuggestion} />
               <Stack.Screen name="AddSubject" component={AddSubject} />
+              <Stack.Screen name="TeacherNotification" component={TeacherNotification} />
             </>
           ) : (
             // Student/regular user - Show tabs
@@ -95,10 +179,17 @@ function AppNavigator() {
           <Stack.Screen name="RegisterTeachers2" component={RegisterTeachers2} />
           <Stack.Screen name="TeacherSubjectSuggestion" component={TeacherSubjectSuggestion} />
           <Stack.Screen name="AddSubject" component={AddSubject} />
+          
+          
          
         </>
       )}
       <Stack.Screen name="CourseDetails" component={CourseDetails} />
+      <Stack.Screen name="ChatLogin"  component={ChatLogin} />
+      <Stack.Screen name="MessageListPage"  component={MessageListPage} />
+      <Stack.Screen name="ChatHome"  component={ChatHome} />
+      {/* <Stack.Screen name="NewChatDialog"  component={NewChatDialog} /> */}
+
     </Stack.Navigator>
   );
 }

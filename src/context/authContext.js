@@ -18,6 +18,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db } from '../firebase/confic';
 import { getAuthErrorMessage } from '../utils/firebaseErrors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// import { ZIMKit } from '@zegocloud/zimkit-rn';
 
 const AuthContext = createContext();
 
@@ -43,6 +44,7 @@ export const AuthContextProvider = ({ children }) => {
           // Fetch user profile
           if (parsedUser.uid) {
             const profile = await fetchUserProfile(parsedUser.uid);
+
             if (profile) {
               setUserProfile(profile);
               setSelectedRole(profile.role || null);
@@ -66,6 +68,10 @@ export const AuthContextProvider = ({ children }) => {
       );
 
       if (firebaseUser) {
+        const profile = await fetchUserProfile(firebaseUser.uid);
+        const userID = firebaseUser.uid; //  Firebase UID
+        const userName = profile?.username || firebaseUser.email || 'User';
+
         // Save user to AsyncStorage
         await AsyncStorage.setItem(
           '@user',

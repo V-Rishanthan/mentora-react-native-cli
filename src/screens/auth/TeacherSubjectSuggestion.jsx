@@ -300,14 +300,14 @@ Constraints:
           </View>
 
           {/* AI Assistance Suggestion */}
-          {aiOutput.length > 0 && (
+          {aiOutput?.length > 0 && (
             <View className="mt-6">
               <Text className="text-lg font-bold text-primary mb-2">
                 Recommended for: {userInput}
               </Text>
 
               <View className="bg-white/50 rounded-2xl p-2">
-                {aiOutput.map((subject, idx) => (
+                {aiOutput?.map((subject, idx) => (
                   <TouchableOpacity
                     key={idx}
                     className="mt-2 flex-row items-center  p-3 rounded-xl "
