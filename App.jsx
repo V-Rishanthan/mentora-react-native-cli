@@ -8,7 +8,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthContextProvider, useAuth } from "./src/context/authContext";
-import { Home, BookOpen, Search, User,MessageSquareMore } from 'lucide-react-native';
+import { Home, BookOpen, Search, User,MessageSquareMore ,Video } from 'lucide-react-native';
 
 // Import screens
 import WelcomeScreen from "./src/screens/shared/WelcomeScreen";
@@ -25,18 +25,25 @@ import CourseDetails from "./src/components/CourseDetails"
 // Import tab screens (create these if you don't have them)
 import HomeScreen from "./src/screens/tabs/Home";
 import ProfileScreen from "./src/screens/tabs/Profile";
-import SearchScreen from "./src/screens/tabs/Search";
+// import SearchScreen from "./src/screens/tabs/Search";
 import ChatScreen from "./src/screens/tabs/Chat";
+import Audience from "./src/screens/tabs/Audience";
 
 
 // teacher tab
 import TeacherHome from "./src/screens/stack/TeacherHome"
-import TeacherNotification from "./src/screens/stack/TeacherNotification"
+import TeacherChat from "./src/screens/stack/TeacherChat"
 
 // Testing Componets
 import ChatLogin from "./src/components/ChatLogin"
 import ChatHome from "./src/components/ChatHome"
 import { MessageListPage } from "@zegocloud/zimkit-rn";
+
+// Video
+import LiveHome from './src/components/livestreaming/LiveHome'
+import LiveHost from './src/components/livestreaming/LiveHost'
+import AudienceLive from './src/components/livestreaming/AudienceLive'
+
 
 
 
@@ -82,8 +89,9 @@ function TabNavigator() {
       let IconComponent;
       if (route.name === "Home") IconComponent = Home;
       else if (route.name === "Chat") IconComponent = MessageSquareMore;
-      else if (route.name === "Search") IconComponent = Search;
+      else if (route.name === "Audience") IconComponent = Video;
       else if (route.name === "Profile") IconComponent = User;
+      // else if (route.name === "Audience") IconComponent = User;
 
       return (
         <View className="items-center justify-center">
@@ -125,8 +133,13 @@ function TabNavigator() {
 >
   <Tab.Screen name="Home" component={HomeScreen} />
   <Tab.Screen name="Chat" component={ChatScreen} />
-  <Tab.Screen name="Search" component={SearchScreen} />
+
+
+
+  {/* <Tab.Screen name="Search" component={SearchScreen} /> */}
+  <Tab.Screen name="Audience" component={Audience} />
   <Tab.Screen name="Profile" component={ProfileScreen} />
+  
 
 </Tab.Navigator>
 );
@@ -157,7 +170,7 @@ function AppNavigator() {
               <Stack.Screen name="TeacherHome" component={TeacherHome} />
               <Stack.Screen name="TeacherSubjectSuggestion" component={TeacherSubjectSuggestion} />
               <Stack.Screen name="AddSubject" component={AddSubject} />
-              <Stack.Screen name="TeacherNotification" component={TeacherNotification} />
+              <Stack.Screen name="TeacherChat" component={TeacherChat} />
             </>
           ) : (
             // Student/regular user - Show tabs
@@ -189,6 +202,9 @@ function AppNavigator() {
       <Stack.Screen name="ChatLogin"  component={ChatLogin} />
       <Stack.Screen name="MessageListPage"  component={MessageListPage} />
       <Stack.Screen name="ChatHome"  component={ChatHome} />
+      <Stack.Screen name="LiveHome"  component={LiveHome} />
+      <Stack.Screen name="LiveHost"  component={LiveHost} />
+      <Stack.Screen name="AudienceLive"  component={AudienceLive} />
 
 
     </Stack.Navigator>

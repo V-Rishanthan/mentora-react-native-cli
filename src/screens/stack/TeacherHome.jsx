@@ -1,15 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Dimensions,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { BookOpen, Play, Bell, Calendar, Plus, Clock, Tag, Users } from 'lucide-react-native';
+import {
+  BookOpen,
+  Play,
+  Video,
+  Calendar,
+  Plus,
+  Clock,
+  Tag,
+  Users,
+  MessageSquareText,
+} from 'lucide-react-native';
 import { useAuth } from '../../context/authContext';
 
-const { width: screenWidth } = Dimensions.get('window');
+// message-square-text
 
+const { width: screenWidth } = Dimensions.get('window');
 const CourseCard = ({ course, onViewDetails }) => {
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       className="mb-6"
       onPress={() => onViewDetails(course)}
       activeOpacity={0.9}
@@ -27,7 +46,7 @@ const CourseCard = ({ course, onViewDetails }) => {
             <BookOpen size={60} color="white" />
           </View>
         )}
-        
+
         {/* Category Badge */}
         <View className="absolute top-4 left-4 bg-black/70 px-3 py-1.5 rounded-full">
           <Text className="text-white text-xs font-bold">
@@ -45,7 +64,10 @@ const CourseCard = ({ course, onViewDetails }) => {
 
         {/* Description */}
         {course.description && (
-          <Text className="text-grayPro-600 text-sm mb-4 leading-5" numberOfLines={3}>
+          <Text
+            className="text-grayPro-600 text-sm mb-4 leading-5"
+            numberOfLines={3}
+          >
             {course.description}
           </Text>
         )}
@@ -76,11 +98,13 @@ const CourseCard = ({ course, onViewDetails }) => {
         </View>
 
         {/* View Course Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           className="bg-primary flex-row items-center justify-center py-4 rounded-xl"
-          onPress={() => onViewDetails(course)}
+          // onPress={() => onViewDetails(course)}
         >
-          <Text className="text-white font-bold text-lg mr-2">Explore Course</Text>
+          <Text className="text-white font-bold text-lg mr-2">
+            Explore Course
+          </Text>
           <Play size={18} color="white" fill="white" />
         </TouchableOpacity>
       </View>
@@ -88,10 +112,11 @@ const CourseCard = ({ course, onViewDetails }) => {
   );
 };
 
+
 const TeacherHome = () => {
   const navigation = useNavigation();
   const { user: authUser, userProfile, selectedRole } = useAuth();
-  
+
   const [loading, setLoading] = useState(true);
   const [teacherCourses, setTeacherCourses] = useState([]);
 
@@ -107,11 +132,11 @@ const TeacherHome = () => {
   // Extract teacher's courses from profile data
   useEffect(() => {
     if (authUser && userProfile && selectedRole === 'teacher') {
-      console.log("Teacher Profile Data:", userProfile);
-      
+      console.log('Teacher Profile Data:', userProfile);
+
       // Create course data from teacher's profile
       const courses = [];
-      
+
       // If teacher has subjectName from AddSubject screen, create a course from it
       if (userProfile.subjectName) {
         courses.push({
@@ -124,7 +149,7 @@ const TeacherHome = () => {
           createdAt: userProfile.subjectAddedAt || new Date().toISOString(),
         });
       }
-      
+
       // If teacher has subjects array (from TeacherSubjectSuggestion screen)
       if (userProfile.subjectName && Array.isArray(userProfile.subjectName)) {
         userProfile.subjectName.forEach((subject, index) => {
@@ -139,14 +164,14 @@ const TeacherHome = () => {
           });
         });
       }
-      
+
       // If teacher has other course data in profile
       if (userProfile.courses && Array.isArray(userProfile.courses)) {
         courses.push(...userProfile.courses);
       }
-      
+
       setTeacherCourses(courses);
-      console.log("Teacher Courses:", courses);
+      console.log('Teacher Courses:', courses);
       setLoading(false);
     } else if (authUser && selectedRole !== 'teacher') {
       // Not a teacher, redirect or show message
@@ -158,7 +183,7 @@ const TeacherHome = () => {
     }
   }, [authUser, userProfile, selectedRole]);
 
-  const handleViewCourseDetails = (course) => {
+  const handleViewCourseDetails = course => {
     navigation.navigate('CourseDetails', { courseId: course.id });
   };
 
@@ -169,6 +194,16 @@ const TeacherHome = () => {
   const handleProfilePress = () => {
     navigation.navigate('Profile');
   };
+
+  const handleLiveStreaming = () =>{
+    navigation.navigate("LiveHome")
+  }
+
+  // User (Teacher) initial
+  const teacherInitial = useMemo(() => {
+    const n = (userProfile?.username || 'U').trim();
+    return n.length ? n[0].toUpperCase() : 'U';
+  }, [userProfile?.username]);
 
   if (loading) {
     return (
@@ -181,8 +216,8 @@ const TeacherHome = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
-      <ScrollView 
-        className="px-5" 
+      <ScrollView
+        className="px-5"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 30 }}
       >
@@ -201,24 +236,31 @@ const TeacherHome = () => {
           </View>
           <View className="flex-row items-center">
             {/* Notification */}
-            <TouchableOpacity 
+            <TouchableOpacity
               className="bg-secondary w-12 h-12 rounded-full items-center justify-center mr-3 border border-grayPro-100"
-              onPress={() => navigation.navigate('TeacherNotification')}
+              onPress={() => navigation.navigate('TeacherChat')}
             >
-              <Bell size={22} color="#8681FB" />
+              <MessageSquareText size={22} color="#8681FB" />
               <View className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border border-white" />
+            </TouchableOpacity>
+
+            {/* Live Streaming Screen */}
+            <TouchableOpacity
+             onPress={handleLiveStreaming}
+             className="bg-secondary w-12 h-12 rounded-full items-center justify-center mr-3 border border-grayPro-100">
+              <Video size={22} color="#8681FB" />
+              <View className="absolute -top-1 -right-1 w-3 h-3  rounded-full border border-white" />
             </TouchableOpacity>
 
             {/* Profile Image */}
             <TouchableOpacity onPress={handleProfilePress}>
-              <Image
-                source={{ 
-                  uri: userProfile?.photoURL || 
-                       authUser?.photoURL || 
-                       'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60' 
-                }}
-                className="w-12 h-12 rounded-full border-2 border-grayPro-100"
-              />
+              <View className="h-14 w-14 rounded-3xl bg-primary items-center justify-center shadow-2xl">
+                <Text className="text-white text-3xl font-black">
+                  {teacherInitial}
+                </Text>
+              </View>
+
+              
             </TouchableOpacity>
           </View>
         </View>
@@ -260,14 +302,17 @@ const TeacherHome = () => {
                 No Courses Yet
               </Text>
               <Text className="text-grayPro-600 text-center mb-8 leading-6">
-                Create your first course to share your knowledge and start teaching students
+                Create your first course to share your knowledge and start
+                teaching students
               </Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 className="bg-primary flex-row items-center px-8 py-4 rounded-full shadow-lg"
                 onPress={handleCreateCourse}
               >
                 <Plus size={24} color="white" className="mr-3" />
-                <Text className="text-white font-bold text-lg">Create First Course</Text>
+                <Text className="text-white font-bold text-lg">
+                  Create First Course
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -275,7 +320,7 @@ const TeacherHome = () => {
 
         {/* Create New Course Button (shown when there are courses) */}
         {teacherCourses.length > 0 && (
-          <TouchableOpacity 
+          <TouchableOpacity
             className="border-2 border-dashed border-primary rounded-[24px] p-8 items-center justify-center bg-primary/5 mb-10 mt-4"
             onPress={handleCreateCourse}
             activeOpacity={0.8}
@@ -295,10 +340,14 @@ const TeacherHome = () => {
         {/* Stats Section (optional) */}
         {teacherCourses.length > 0 && (
           <View className="bg-grayPro-50 rounded-[24px] p-6 mb-6">
-            <Text className="text-lg font-bold text-grayPro-800 mb-4">Teaching Overview</Text>
+            <Text className="text-lg font-bold text-grayPro-800 mb-4">
+              Teaching Overview
+            </Text>
             <View className="flex-row justify-between">
               <View className="items-center">
-                <Text className="text-2xl font-bold text-primary">{teacherCourses.length}</Text>
+                <Text className="text-2xl font-bold text-primary">
+                  {teacherCourses.length}
+                </Text>
                 <Text className="text-grayPro-600 text-sm mt-1">Courses</Text>
               </View>
               <View className="items-center">

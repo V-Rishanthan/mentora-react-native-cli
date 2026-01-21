@@ -1,57 +1,62 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StatusBar,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { ZIMKit } from '@zegocloud/zimkit-rn';
 import { useAuth } from '../context/authContext';
 import {
   MessageCircle,
   ShieldCheck,
-  Hash,
   ChevronRight,
   User,
+  Hash,
 } from 'lucide-react-native';
-
-const APP_ID = 68270551;
-const APP_SIGN =
-  '0485d64e055a2c832518605cd8ed32437f6d8081956add41b054165279d1d98f';
 
 const ChatLogin = () => {
   const navigation = useNavigation();
-  const { username } = useAuth();
+  const route = useRoute();
 
-  const [userID, setUserID] = useState('');
+  //  from previous screen (CourseDetails)
+  const { teacherChatId, courseName } = route?.params || {};
+
+  //  logged in user data
+  const { username, userProfile } = useAuth();
+
+  const [userID, setUserID] = useState(''); //  will be studentChatId (no random)
   const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(false);
 
-  //  prevent double init in dev
-  const didInit = useRef(false);
+  const appConfig = {
+    appID: 68270551,
+    appSign:
+      '0485d64e055a2c832518605cd8ed32437f6d8081956add41b054165279d1d98f',
+  };
 
   useEffect(() => {
-    if (didInit.current) return;
-    didInit.current = true;
-
-    try {
-      ZIMKit.init(APP_ID, APP_SIGN);
-      console.log(' ZIMKit initialized');
-    } catch (e) {
-      console.log(' ZIMKit init error:', e);
-    }
+    ZIMKit.init(appConfig.appID, appConfig.appSign);
   }, []);
 
-  // Prefill username from auth (but still editable)
+  //  derive student chat id from profile (supports both names)
+  const studentChatId = useMemo(() => {
+    return (
+      userProfile?.studentChatId ||
+      userProfile?.studentChatID || //  because you saved studentChatID in register()
+      ''
+    );
+  }, [userProfile]);
+
+  //  set login identity from profile
   useEffect(() => {
+    if (studentChatId) setUserID(String(studentChatId));
     if (username) setUserName(username);
-  }, [username]);
+  }, [studentChatId, username]);
 
   const initial = useMemo(() => {
     const n = (userName || 'U').trim();
@@ -59,21 +64,23 @@ const ChatLogin = () => {
   }, [userName]);
 
   const chatToLogin = async () => {
-    const id = userID.trim();
-    const name = userName.trim();
-
-    if (!id || !name) {
-      Alert.alert('Missing Info', 'Please enter both User ID and Chat Handle.');
-      return;
-    }
-
     try {
+      if (!userID || !userName) return;
+
       setLoading(true);
-      await ZIMKit.connectUser({ userID: id, userName: name }, '');
-      navigation.navigate('ChatHome', { userID: id, userName: name });
+
+      //  connect current (student) user
+      await ZIMKit.connectUser({ userID, userName }, '');
+
+      //  go to home and pass both ids so ChatHome can start conversation with teacher
+      navigation.navigate('ChatHome', {
+        userID,
+        userName,
+        teacherChatId: teacherChatId || '',
+        courseName: courseName || '',
+      });
     } catch (e) {
-      console.log('❌ ZIM login error:', e);
-      Alert.alert('Login Failed', 'Could not connect to chat. Please try again.');
+      console.log('ZIM login error:', e);
     } finally {
       setLoading(false);
     }
@@ -81,7 +88,11 @@ const ChatLogin = () => {
 
   return (
     <View className="flex-1 bg-slate-50">
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar
+        barStyle="light-content"
+        translucent
+        backgroundColor="transparent"
+      />
 
       {/* Decorative Background Elements */}
       <View className="absolute top-0 left-0 right-0 h-[45%] bg-primary rounded-b-[60px]" />
@@ -96,7 +107,7 @@ const ChatLogin = () => {
       >
         <View className="flex-1 px-6 pt-20">
           {/* Header Section */}
-          <View className="flex-row items-center justify-between mb-8">
+          <View className="flex-row items-center justify-between mb-6">
             <View>
               <Text className="text-white text-4xl font-black tracking-tight">
                 Connect.
@@ -110,7 +121,42 @@ const ChatLogin = () => {
             </View>
           </View>
 
-          {/* Identity Card (Glassmorphism) */}
+          {/*  NEW: Top IDs Bar */}
+          <View className="bg-white/10 border border-white/20 rounded-3xl px-5 py-4 mb-6">
+            <Text className="text-indigo-100 text-xs font-bold uppercase tracking-widest mb-2">
+              Chat IDs
+            </Text>
+
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1 mr-3">
+                <Text className="text-indigo-100 text-[11px] font-bold">
+                  Student Chat ID
+                </Text>
+                <Text className="text-white text-lg font-black">
+                  {userID || 'Not Found'}
+                </Text>
+              </View>
+
+              <View className="w-[1px] h-10 bg-white/20" />
+
+              <View className="flex-1 ml-3">
+                <Text className="text-indigo-100 text-[11px] font-bold">
+                  Teacher Chat ID
+                </Text>
+                <Text className="text-white text-lg font-black">
+                  {teacherChatId || 'Not Found'}
+                </Text>
+              </View>
+            </View>
+
+            {!!courseName && (
+              <Text className="text-indigo-100 mt-2 text-xs font-medium opacity-90">
+                Course: {courseName}
+              </Text>
+            )}
+          </View>
+
+          {/* Identity Card */}
           <View className="bg-white/10 border border-white/20 rounded-[40px] p-6 mb-8 items-center flex-row shadow-xl">
             <View className="h-20 w-20 rounded-3xl bg-white items-center justify-center shadow-2xl">
               <Text className="text-indigo-600 text-3xl font-black">
@@ -125,7 +171,7 @@ const ChatLogin = () => {
                 </Text>
               </View>
               <Text className="text-white text-2xl font-bold truncate">
-                {userName?.trim() ? userName : 'Guest User'}
+                {userName || 'Guest User'}
               </Text>
             </View>
           </View>
@@ -136,42 +182,40 @@ const ChatLogin = () => {
               Welcome back
             </Text>
             <Text className="text-slate-400 mb-8 font-medium">
-              Enter your credentials to sync.
+              Your credentials are ready for sync.
             </Text>
 
-            {/* Inputs Container */}
+            {/* Student ID */}
             <View className="space-y-5">
-              {/* ✅ User ID Input */}
               <View>
-                <Label text="User ID" />
+                <Label text="Student Chat ID" />
                 <View className="flex-row items-center bg-slate-50 border border-slate-100 rounded-2xl px-5 h-16">
                   <Hash size={20} color="#6366f1" />
-                  <TextInput
-                    className="flex-1 ml-4 text-slate-900 font-bold text-lg"
-                    placeholder="Enter your user ID"
-                    placeholderTextColor="#94A3B8"
-                    value={userID}
-                    onChangeText={setUserID}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
+                  <Text className="flex-1 ml-4 text-slate-900 font-bold text-lg">
+                    {userID || 'Not Found'}
+                  </Text>
                 </View>
               </View>
 
-              {/* ✅ Username Input */}
+              {/* Username */}
               <View className="mt-4">
                 <Label text="Chat Handle" />
                 <View className="flex-row items-center bg-slate-50 border border-slate-100 rounded-2xl px-5 h-16">
                   <User size={20} color="#6366f1" />
-                  <TextInput
-                    className="flex-1 ml-4 text-slate-900 font-bold text-lg"
-                    placeholder="Enter display name"
-                    placeholderTextColor="#94A3B8"
-                    value={userName}
-                    onChangeText={setUserName}
-                    autoCapitalize="words"
-                    autoCorrect={false}
-                  />
+                  <Text className="flex-1 ml-4 text-slate-900 font-bold text-lg">
+                    {userName}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Teacher ID */}
+              <View className="mt-4">
+                <Label text="Teacher Chat ID" />
+                <View className="flex-row items-center bg-slate-50 border border-slate-100 rounded-2xl px-5 h-16">
+                  <Hash size={20} color="#6366f1" />
+                  <Text className="flex-1 ml-4 text-slate-900 font-bold text-lg">
+                    {teacherChatId || 'Not Found'}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -180,11 +224,11 @@ const ChatLogin = () => {
             <TouchableOpacity
               onPress={chatToLogin}
               activeOpacity={0.8}
-              disabled={loading || !userID.trim() || !userName.trim()}
+              disabled={loading || !userID || !userName || !teacherChatId}
               className={`mt-10 rounded-[25px] flex-row items-center justify-center shadow-lg shadow-indigo-300 ${
                 loading ? 'bg-indigo-400' : 'bg-primary'
               }`}
-              style={{ height: 64, opacity: loading || !userID.trim() || !userName.trim() ? 0.7 : 1 }}
+              style={{ height: 64 }}
             >
               {loading ? (
                 <ActivityIndicator color="white" />

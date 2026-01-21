@@ -31,9 +31,13 @@ export const AuthContextProvider = ({ children }) => {
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [username, setUsername] = useState(null);
+  const [userChatId, setUserChatId] = useState(null);
 
   // chat id
   const [chatUserID, setChatUserID] = useState(null);
+
+  // Live Stream Id
+  const [liveStream, setLiveStreamID] = useState();
 
   useEffect(() => {
     // Check if user is already logged in from AsyncStorage
@@ -118,6 +122,12 @@ export const AuthContextProvider = ({ children }) => {
     return Math.floor(100000 + Math.random() * 900000).toString();
   };
 
+  // Generate live stream ID
+  const generateLiveStreamId = () => {
+    // 6-digit numeric (100000 - 999999)
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
   // Function to fetch all courses (teachers) data
   const fetchCourseData = async () => {
     try {
@@ -148,6 +158,18 @@ export const AuthContextProvider = ({ children }) => {
           availableForHire: userData.availableForHire || false,
           totalStudents: userData.totalStudents || 0,
           totalClasses: userData.totalClasses || 0,
+          teacherChatId: userData.teacherChatId
+            ? String(userData.teacherChatId)
+            : '',
+
+          studentChatId: userData.studentChatId
+            ? String(userData.studentChatId)
+            : '',
+
+          // Live Stream
+          studentLiveStreamID: userData.studentLiveStreamID
+            ? String(userData.studentLiveStreamID)
+            : '',
         });
       });
 
@@ -179,9 +201,30 @@ export const AuthContextProvider = ({ children }) => {
         console.log('User profile found:', profileData);
         setUserProfile(profileData);
         setUsername(profileData?.username || null); //  keep username synced
+        setUserChatId(profileData?.teacherChatId || profileData.studentChatId); //  keep chat id synced
 
         // display the username only
-        console.log('🔥 Username from profile:', profileData?.username || null);
+        console.log(
+          '✅  Username from profile:',
+          profileData?.username || null,
+        );
+        const chatId =
+          profileData?.teacherChatId ||
+          profileData?.studentChatId ||
+          profileData?.studentChatID ||
+          null;
+
+        setUserChatId(chatId);
+        console.log('🔥 Chat ID from profile:', chatId);
+
+        // Live Stream id
+        const liveId =
+          profileData?.teacherLiveStreamId ||
+          profileData?.studentLiveStreamID ||
+          null;
+
+        setLiveStreamID(liveId);
+        console.log('✅ Live ID from profile:', liveId);
 
         return profileData;
       } else {
@@ -303,7 +346,12 @@ export const AuthContextProvider = ({ children }) => {
       );
 
       console.log('Response.user', response?.user);
+
+      // Chat ID
       const newChatId = generateChatId();
+
+      // Live Stream ID
+      const newLiveId = generateLiveStreamId();
 
       // Create user document in Firestore
       await setDoc(doc(db, 'users', response?.user?.uid), {
@@ -313,12 +361,14 @@ export const AuthContextProvider = ({ children }) => {
         subjectInterest: subject,
         role: role,
         userId: response?.user?.uid,
-        chatId: newChatId,
+        studentChatID: newChatId,
+        studentLiveStreamID: newLiveId,
         createdAt: new Date().toISOString(),
       });
 
       // store in context state too chat id
       setChatUserID(newChatId);
+      setLiveStreamID(newLiveId);
 
       // Save to AsyncStorage
       await AsyncStorage.setItem(
@@ -358,7 +408,12 @@ export const AuthContextProvider = ({ children }) => {
       );
 
       console.log('Firebase user created:', response.user.uid);
+
+      // Chat ID
       const newChatId = generateChatId();
+
+      // Live Stream ID
+      const newLiveId = generateLiveStreamId();
 
       // 2. Create teacher document in Firestore
       await setDoc(doc(db, 'users', response.user.uid), {
@@ -384,13 +439,18 @@ export const AuthContextProvider = ({ children }) => {
         totalClasses: 0,
         availableForHire: true,
         userId: response.user.uid,
-        chatId: newChatId,
+        teacherChatId: newChatId,
+        teacherLiveStreamId: newLiveId,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
 
       // store in context state too chat id
       setChatUserID(newChatId);
+
+      // store in context state too chat id
+      setLiveStreamID(newLiveId);
+
       // Save to AsyncStorage
       await AsyncStorage.setItem(
         '@user',
@@ -473,6 +533,8 @@ export const AuthContextProvider = ({ children }) => {
 
         // Testing
         username,
+        chatUserID,
+        liveStream,
       }}
     >
       {children}

@@ -26,18 +26,32 @@ import {
 import { ConversationList } from '@zegocloud/zimkit-rn';
 
 const ChatHome = () => {
+
+
+
+
   const route = useRoute();
   const navigation = useNavigation();
-  const { userID, userName } = route.params || {};
+
+ 
+
+
+  //  receive teacherChatId as well
+  const { userID, userName, teacherChatId, courseName } = route.params || {};
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [userIdInput, setUserIdInput] = useState('');
 
   const initial = (userName || 'U').trim().charAt(0).toUpperCase();
 
+  //  copy TEACHER chat id (not student/userID)
   const copyToClipboard = () => {
-    Clipboard.setString(userID || '');
-    Alert.alert('Success', 'User ID copied to clipboard!');
+    if (!teacherChatId) {
+      Alert.alert('Missing', 'Teacher Chat ID not available');
+      return;
+    }
+    Clipboard.setString(String(teacherChatId));
+    Alert.alert('Success', 'Teacher Chat ID copied to clipboard!');
   };
 
   const handleStartChat = () => {
@@ -49,17 +63,15 @@ const ChatHome = () => {
     }
 
     if (targetUserId === userID) {
-      Alert.alert("Invalid", "You can't chat with yourself.");
+      Alert.alert('Invalid', "You can't chat with yourself.");
       return;
     }
 
     //  Open 1-to-1 chat (peer chat)
     navigation.navigate('MessageListPage', {
-      conversationID: targetUserId,          
+      conversationID: targetUserId,
       conversationName: targetUserId,
-      conversationType: 0,                  
-      // optional app bar actions not required; ZIMKit already handles back button
-      // but you can keep it if you want:
+      conversationType: 0,
       appBarActions: [
         {
           icon: 'goBack',
@@ -72,6 +84,24 @@ const ChatHome = () => {
 
     setIsModalVisible(false);
     setUserIdInput('');
+  };
+
+  //  quick action: start chat with teacher instantly
+  const startTeacherChat = () => {
+    if (!teacherChatId) {
+      Alert.alert('Missing', 'Teacher Chat ID not available');
+      return;
+    }
+    if (String(teacherChatId) === String(userID)) {
+      Alert.alert('Invalid', "You can't chat with yourself.");
+      return;
+    }
+
+    navigation.navigate('MessageListPage', {
+      conversationID: String(teacherChatId),
+      conversationName: courseName || 'Teacher',
+      conversationType: 0,
+    });
   };
 
   return (
@@ -117,16 +147,30 @@ const ChatHome = () => {
                   {userName || 'Chat User'}
                 </Text>
 
+                {/*  Copy Teacher ID */}
                 <TouchableOpacity
                   onPress={copyToClipboard}
                   className="flex-row items-center mt-1.5 bg-gray-50 self-start px-3 py-1 rounded-full border border-gray-100"
                 >
                   <Fingerprint size={12} color="#6366f1" />
                   <Text className="text-gray-500 text-[10px] font-bold ml-1.5 uppercase tracking-tighter">
-                    ID: {userID || '0000'}
+                    Teacher ID: {teacherChatId || 'Not Found'}
                   </Text>
                   <Copy size={10} color="#94A3B8" className="ml-2" />
                 </TouchableOpacity>
+
+                {/*  Optional: start teacher chat button */}
+                {!!teacherChatId && (
+                  <TouchableOpacity
+                    onPress={startTeacherChat}
+                    activeOpacity={0.8}
+                    className="mt-3 bg-primary/10 self-start px-3 py-2 rounded-xl border border-primary/20"
+                  >
+                    <Text className="text-primary font-bold text-xs">
+                      Chat with Teacher
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
 
               <TouchableOpacity className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
@@ -169,7 +213,23 @@ const ChatHome = () => {
 
           {/* List Area */}
           <View className="flex-1 px-4">
-            <ConversationList />
+            {/* <ConversationList /> */}
+<ConversationList
+  onPressed={(conversation) => {
+    const safeType =
+      conversation.type === 2 || conversation.type === 1 ? 2 : 0;
+
+    navigation.navigate('MessageListPage', {
+      conversationID: String(conversation.conversationID),
+      conversationName:
+        conversation.conversationName || String(conversation.conversationID),
+      conversationType: safeType,
+      appBarActions: [{ icon: 'goBack', onPressed: () => navigation.goBack() }],
+    });
+  }}
+/>
+
+
           </View>
         </View>
       </SafeAreaView>
@@ -235,6 +295,20 @@ const ChatHome = () => {
                 <Text className="text-white font-medium">Start Chat</Text>
               </TouchableOpacity>
             </View>
+
+            {!!teacherChatId && (
+              <TouchableOpacity
+                onPress={() => {
+                  setUserIdInput(String(teacherChatId));
+                }}
+                className="mt-4 bg-primary/10 py-3 rounded-xl items-center border border-primary/20"
+                activeOpacity={0.8}
+              >
+                <Text className="text-primary font-bold">
+                  Use Teacher ID ({teacherChatId})
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </Modal>

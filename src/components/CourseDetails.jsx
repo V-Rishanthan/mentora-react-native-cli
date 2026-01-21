@@ -1,9 +1,7 @@
-import React, { useMemo } from "react";
-import { ArrowLeft, BookOpen, Clock, User } from "lucide-react-native";
-import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-
+import React, { useMemo } from 'react';
+import { ArrowLeft, BookOpen, Clock, User } from 'lucide-react-native';
+import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CourseDetails({ navigation, route }) {
   // In RN CLI + React Navigation, data comes from route.params
@@ -14,18 +12,18 @@ export default function CourseDetails({ navigation, route }) {
     try {
       if (!courseParam) return null;
 
-      if (typeof courseParam === "string") {
+      if (typeof courseParam === 'string') {
         return JSON.parse(courseParam);
       }
 
-      if (typeof courseParam === "object") {
+      if (typeof courseParam === 'object') {
         return courseParam;
       }
 
       return null;
     } catch (e) {
-      console.error("Error parsing courseParam:", e);
-      console.log("Raw courseParam:", courseParam);
+      console.error('Error parsing courseParam:', e);
+      console.log('Raw courseParam:', courseParam);
       return null;
     }
   }, [courseParam]);
@@ -49,22 +47,23 @@ export default function CourseDetails({ navigation, route }) {
 
   const getImageSource = () => {
     if (!course.thumbnail) {
-      return require("../assets/course/course-2.png");
+      return require('../assets/course/course-2.png');
     }
 
     // string: base64 / url / path
-    if (typeof course.thumbnail === "string") {
-      if (course.thumbnail.startsWith("data:image")) return { uri: course.thumbnail };
-      if (course.thumbnail.startsWith("http")) return { uri: course.thumbnail };
+    if (typeof course.thumbnail === 'string') {
+      if (course.thumbnail.startsWith('data:image'))
+        return { uri: course.thumbnail };
+      if (course.thumbnail.startsWith('http')) return { uri: course.thumbnail };
       return { uri: course.thumbnail }; // local file path
     }
 
     // object: { uri }
-    if (typeof course.thumbnail === "object" && course.thumbnail?.uri) {
+    if (typeof course.thumbnail === 'object' && course.thumbnail?.uri) {
       return { uri: course.thumbnail.uri };
     }
 
-    return require("../assets/course/course-2.png");
+    return require('../assets/course/course-2.png');
   };
 
   const imageSource = getImageSource();
@@ -75,7 +74,11 @@ export default function CourseDetails({ navigation, route }) {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Hero Image Section */}
         <View className="relative">
-          <Image source={imageSource} className="w-full h-64" resizeMode="cover" />
+          <Image
+            source={imageSource}
+            className="w-full h-64"
+            resizeMode="cover"
+          />
 
           {/* Back Button */}
           <TouchableOpacity
@@ -94,14 +97,19 @@ export default function CourseDetails({ navigation, route }) {
           <View className="flex-row justify-between items-center mb-4">
             <View className="bg-green-50 px-4 py-2 rounded-full border border-green-100">
               <Text className="text-green-800 text-sm font-outfit-medium">
-                {course.category || "General"}
+                {course.category || 'General'}
+              </Text>
+            </View>
+            <View className="bg-gray-100 px-3 py-2 rounded-full text-green-800">
+              <Text className="text-grayPro-700 text-sm font-outfit-medium">
+                Teacher Chat ID : {course?.teacherChatId || 'Not created'}
               </Text>
             </View>
           </View>
 
           {/* Title */}
           <Text className="text-2xl font-outfit-bold text-grayPro-800 mb-3">
-            {course.subjectName || course.title || "Course Title"}
+            {course.subjectName || course.title || 'Course Title'}
           </Text>
 
           {/* Stats */}
@@ -109,14 +117,14 @@ export default function CourseDetails({ navigation, route }) {
             <View className="flex-row items-center">
               <Clock size={18} color="#6B7280" />
               <Text className="font-outfit-medium ml-2 text-grayPro-700">
-                {course.duration || "10 hours"}
+                {course.duration || '10 hours'}
               </Text>
             </View>
 
             <View className="flex-row items-center">
               <BookOpen size={18} color="#6B7280" />
               <Text className="font-outfit-medium ml-2 text-grayPro-700">
-                {(course.lessons || "24")} lessons
+                {course.lessons || '24'} lessons
               </Text>
             </View>
           </View>
@@ -124,7 +132,10 @@ export default function CourseDetails({ navigation, route }) {
           {/* Instructor */}
           <View className="flex-row items-center mb-8 p-4 bg-primary/5 rounded-xl border border-primary/10">
             {course.lecturerPic ? (
-              <Image source={{ uri: course.lecturerPic }} className="w-16 h-16 rounded-full" />
+              <Image
+                source={{ uri: course.lecturerPic }}
+                className="w-16 h-16 rounded-full"
+              />
             ) : (
               <View className="w-16 h-16 bg-primary/10 rounded-full items-center justify-center">
                 <User size={24} color="#4F46E5" />
@@ -133,14 +144,14 @@ export default function CourseDetails({ navigation, route }) {
 
             <View className="ml-4 flex-1">
               <Text className="font-outfit-semibold text-lg text-grayPro-800">
-                {course.teacherName || course.instructor || "Mohamed Nuhman"}
+                {course.teacherName || course.instructor || 'Not Found'}
               </Text>
               <Text className="text-grayPro-500 text-sm font-outfit-regular mt-1">
-                {course.teacherTitle || "Software Engineer"} ·{" "}
-                {course.experience || "5+ years experience"}
+                {course.teacherTitle || 'Software Engineer'} ·{' '}
+                {course.experience || '5+ years experience'}
               </Text>
               <Text className="text-primary text-xs font-outfit-medium mt-2">
-                ⭐ {course.instructorRating || "4.9"} Instructor Rating
+                {course.instructorRating || '4.9'} Instructor Rating
               </Text>
             </View>
           </View>
@@ -151,7 +162,7 @@ export default function CourseDetails({ navigation, route }) {
               About This Course
             </Text>
             <Text className="text-grayPro-600 leading-relaxed font-outfit-regular text-base">
-              {course.description || "No description available."}
+              {course.description || 'No description available.'}
             </Text>
           </View>
 
@@ -207,9 +218,16 @@ export default function CourseDetails({ navigation, route }) {
           <TouchableOpacity
             className="bg-primary py-4 rounded-xl mb-10 items-center"
             activeOpacity={0.9}
-            onPress={() => navigation.navigate("ChatLogin")}
+            onPress={() =>
+              navigation.navigate('ChatLogin', {
+                teacherChatId: course?.teacherChatId, //  teacher chat id
+                courseName: course?.subjectName || course?.title || 'Course', //  course name
+              })
+            }
           >
-            <Text className="text-white text-lg font-outfit-semibold">Chat Now</Text>
+            <Text className="text-white text-lg font-outfit-semibold">
+              Chat Now
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

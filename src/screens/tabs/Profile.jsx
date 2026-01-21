@@ -12,8 +12,9 @@ import {
   Target,
   User,
   Users,
-} from "lucide-react-native";
-import { useEffect, useState } from "react";
+  MessageSquareText,
+} from 'lucide-react-native';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -22,9 +23,9 @@ import {
   TouchableOpacity,
   View,
   Alert,
-} from "react-native";
-import { useAuth } from "../../context/authContext";
-import { useNavigation } from "@react-navigation/native";
+} from 'react-native';
+import { useAuth } from '../../context/authContext';
+import { useNavigation } from '@react-navigation/native';
 
 const ProfileScreen = () => {
   const { logout, user: authUser, userProfile, selectedRole } = useAuth();
@@ -33,9 +34,9 @@ const ProfileScreen = () => {
   const [profileData, setProfileData] = useState(null);
 
   useEffect(() => {
-    console.log("UserScreen - Auth User:", authUser);
-    console.log("UserScreen - User Profile:", userProfile);
-    console.log("UserScreen - Selected Role:", selectedRole);
+    console.log('UserScreen - Auth User:', authUser);
+    console.log('UserScreen - User Profile:', userProfile);
+    console.log('UserScreen - Selected Role:', selectedRole);
 
     if (authUser && userProfile) {
       // We have both auth user and profile data
@@ -43,7 +44,7 @@ const ProfileScreen = () => {
       setLoading(false);
     } else if (authUser && !userProfile) {
       // We have auth user but no profile yet
-      console.log("Waiting for profile data...");
+      console.log('Waiting for profile data...');
       // You might want to fetch it manually here if needed
       setLoading(false);
     } else {
@@ -77,43 +78,51 @@ const ProfileScreen = () => {
 
 
   const handleLogOut = () => {
-  Alert.alert("Logout", "Are you sure you want to logout?", [
-    { text: "Cancel", style: "cancel" },
-    {
-      text: "Logout",
-      style: "destructive",
-      onPress: async () => {
-        const res = await logout();
+   
 
-        if (res?.success) {
-          console.warn(" Logged out, go to Login");
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          const res = await logout();
 
-          //  Force navigation
-          navigation.reset({
-            index: 0,
-            routes: [{ name: "Login" }],
-          });
-        } else {
-          Alert.alert("Error", res?.error || "Failed to logout");
-        }
+          if (res?.success) {
+            console.warn(' Logged out, go to Login');
+
+            //  Force navigation
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            });
+          } else {
+            Alert.alert('Error', res?.error || 'Failed to logout');
+          }
+        },
       },
-    },
-  ]);
-};
+    ]);
+  };
 
   const handleBack = () => {
     navigation.goBack();
   };
 
   const handleGoToLogin = () => {
-    navigation.navigate("Login");
+    navigation.navigate('Login');
   };
 
   const handleAddSubject = () => {
-    if (selectedRole === "teacher") {
-      navigation.navigate("AddSubject");
+    if (selectedRole === 'teacher') {
+      navigation.navigate('AddSubject');
     }
   };
+
+   // User (Teacher || Student) initial
+    const initial = useMemo(() => {
+      const n = (profileData?.username || 'U').trim();
+      return n.length ? n[0].toUpperCase() : 'U';
+    }, [profileData?.username]);
 
   if (loading) {
     return (
@@ -142,18 +151,18 @@ const ProfileScreen = () => {
   const displayName =
     profileData?.username ||
     authUser?.displayName ||
-    authUser?.email?.split("@")[0] ||
-    "User";
-  const email = authUser?.email || "No email";
-  const userRole = selectedRole || profileData?.role || "student";
+    authUser?.email?.split('@')[0] ||
+    'User';
+  const email = authUser?.email || 'No email';
+  const userRole = selectedRole || profileData?.role || 'student';
 
   // Format join date
   const joinDate = profileData?.createdAt
-    ? `Joined ${new Date(profileData.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })}`
-    : "Joined recently";
+    ? `Joined ${new Date(profileData.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`
+    : 'Joined recently';
 
   // Role-based header color
-  const headerColor = userRole === "teacher" ? "bg-purple-600" : "bg-primary";
+  const headerColor = userRole === 'teacher' ? 'bg-purple-600' : 'bg-primary';
 
   return (
     <View className="flex-1 bg-white">
@@ -169,19 +178,17 @@ const ProfileScreen = () => {
               <ArrowLeft size={22} color="white" />
             </TouchableOpacity>
 
-            <Text className="text-2xl font-bold text-white">
-              Profile
-            </Text>
+            <Text className="text-2xl font-bold text-white">Profile</Text>
           </View>
 
           {/* Right side with role badge and logout */}
           <View className="flex-row items-center">
             {/* Role Badge */}
             <View
-              className={`px-3 py-1 rounded-full mr-3 ${userRole === "teacher" ? "bg-yellow-500" : "bg-green-500"}`}
+              className={`px-3 py-1 rounded-full mr-3 ${userRole === 'teacher' ? 'bg-yellow-500' : 'bg-green-500'}`}
             >
               <Text className="text-white text-xs font-bold uppercase">
-                {userRole === "teacher" ? "TEACHER" : "STUDENT"}
+                {userRole === 'teacher' ? 'TEACHER' : 'STUDENT'}
               </Text>
             </View>
 
@@ -199,21 +206,24 @@ const ProfileScreen = () => {
         <View className="items-center mb-6">
           {/* Avatar with role indicator */}
           <View className="relative">
-            <Image
+            <View className="h-24 w-24 rounded-3xl bg-primary items-center justify-center shadow-2xl">
+              <Text className="text-white text-3xl font-black">{initial}</Text>
+            </View>
+            {/* <Image
               source={
                 profileData?.avatar
                   ? { uri: profileData.avatar }
-                  : require("../../assets/profile.jpg")
+                  : require('../../assets/profile.jpg')
               }
               className="w-28 h-28 rounded-full border-4 border-white mb-4"
               resizeMode="cover"
-              defaultSource={require("../../assets/profile.jpg")}
-            />
+              defaultSource={require('../../assets/profile.jpg')}
+            /> */}
             {/* Role indicator dot */}
             <View
-              className={`absolute bottom-2 right-2 w-6 h-6 rounded-full border-2 border-white ${userRole === "teacher" ? "bg-yellow-500" : "bg-green-500"} items-center justify-center`}
+              className={`absolute bottom-2 right-2 w-6 h-6 rounded-full border-2 border-white ${userRole === 'teacher' ? 'bg-yellow-500' : 'bg-green-500'} items-center justify-center`}
             >
-              {userRole === "teacher" ? (
+              {userRole === 'teacher' ? (
                 <GraduationCap size={12} color="white" />
               ) : (
                 <Book size={12} color="white" />
@@ -221,11 +231,9 @@ const ProfileScreen = () => {
             </View>
           </View>
 
-          <Text className="text-2xl font-bold text-white">
-            {displayName}
-          </Text>
+          <Text className="text-2xl font-bold text-white">{displayName}</Text>
           <Text className="text-base font-medium text-white/90 mt-1">
-            {userRole === "teacher" ? "Educator" : "Learner"}
+            {userRole === 'teacher' ? 'Educator' : 'Learner'}
           </Text>
           <Text className="text-sm font-medium text-white/70 mt-1">
             {joinDate}
@@ -237,7 +245,7 @@ const ProfileScreen = () => {
       <View className="flex-1 bg-white rounded-t-[40px] -mt-6 pt-10 px-6">
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Teacher-specific action button */}
-          {userRole === "teacher" && (
+          {userRole === 'teacher' && (
             <View className="mt-4 flex-row justify-between items-center mb-8 p-4 bg-primary/5 rounded-xl border border-primary/10">
               <View>
                 <Text className="text-sm text-gray-600 mb-1">
@@ -248,7 +256,7 @@ const ProfileScreen = () => {
                 </Text>
               </View>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 className="flex-row items-center"
                 onPress={handleAddSubject}
               >
@@ -296,6 +304,16 @@ const ProfileScreen = () => {
                 />
               )}
 
+              {(profileData?.studentChatID || profileData?.teacherChatId) && (
+                <DetailItem
+                  icon={<MessageSquareText size={20} color="#F59E0B" />}
+                  label="Chat ID"
+                  value={
+                    profileData?.studentChatID || profileData?.teacherChatId
+                  }
+                />
+              )}
+
               {profileData?.location && (
                 <DetailItem
                   icon={<MapPin size={20} color="#8B5CF6" />}
@@ -307,7 +325,7 @@ const ProfileScreen = () => {
           </View>
 
           {/* TEACHER-SPECIFIC SECTION */}
-          {userRole === "teacher" && profileData && (
+          {userRole === 'teacher' && profileData && (
             <View className="mb-8">
               <View className="flex-row items-center mb-4">
                 <View className="w-8 h-0.5 bg-primary mr-3" />
@@ -375,20 +393,20 @@ const ProfileScreen = () => {
               <View className="flex-row justify-between mt-6">
                 <StatBox
                   label="Rating"
-                  value={profileData.rating || "4.5"}
+                  value={profileData.rating || '4.5'}
                   suffix="/5"
                   color="text-yellow-600"
                 />
 
                 <StatBox
                   label="Students"
-                  value={profileData.totalStudents || "0"}
+                  value={profileData.totalStudents || '0'}
                   color="text-blue-600"
                 />
 
                 <StatBox
                   label="Classes"
-                  value={profileData.totalClasses || "0"}
+                  value={profileData.totalClasses || '0'}
                   color="text-green-600"
                 />
               </View>
@@ -396,7 +414,7 @@ const ProfileScreen = () => {
           )}
 
           {/* STUDENT-SPECIFIC SECTION */}
-          {userRole === "student" && profileData && (
+          {userRole === 'student' && profileData && (
             <View className="mb-8">
               <View className="flex-row items-center mb-4">
                 <View className="w-8 h-0.5 bg-green-600 mr-3" />
@@ -438,14 +456,14 @@ const ProfileScreen = () => {
               <View className="flex-row justify-between mt-4">
                 <StatBox
                   label="Enrolled"
-                  value={profileData.enrolledCourses?.length || "0"}
+                  value={profileData.enrolledCourses?.length || '0'}
                   suffix=" courses"
                   color="text-blue-600"
                 />
 
                 <StatBox
                   label="Completed"
-                  value={profileData.completedCourses?.length || "0"}
+                  value={profileData.completedCourses?.length || '0'}
                   suffix=" courses"
                   color="text-green-600"
                 />
@@ -458,9 +476,7 @@ const ProfileScreen = () => {
             <View className="mb-8">
               <View className="flex-row items-center mb-4">
                 <View className="w-8 h-0.5 bg-blue-600 mr-3" />
-                <Text className="text-xl font-bold text-gray-800">
-                  About
-                </Text>
+                <Text className="text-xl font-bold text-gray-800">About</Text>
               </View>
 
               <View className="bg-gray-100 p-4 rounded-xl">
@@ -474,13 +490,13 @@ const ProfileScreen = () => {
             <View className="flex-row items-center mb-4">
               <View className="w-8 h-0.5 bg-primary mr-3" />
               <Text className="text-xl font-bold text-gray-800">
-                {userRole === "teacher" ? "Teaching Areas" : "Learning Areas"}
+                {userRole === 'teacher' ? 'Teaching Areas' : 'Learning Areas'}
               </Text>
             </View>
 
             <View className="flex-row flex-wrap gap-3">
               {/* Display subjects for teachers */}
-              {userRole === "teacher" &&
+              {userRole === 'teacher' &&
               profileData?.subjects &&
               profileData.subjects.length > 0 ? (
                 profileData.subjects.map((subject, index) => (
@@ -488,12 +504,10 @@ const ProfileScreen = () => {
                     key={index}
                     className="bg-primary/10 px-4 py-3 rounded-full"
                   >
-                    <Text className="text-primary font-medium">
-                      {subject}
-                    </Text>
+                    <Text className="text-primary font-medium">{subject}</Text>
                   </View>
                 ))
-              ) : userRole === "student" && profileData?.subjectInterest ? (
+              ) : userRole === 'student' && profileData?.subjectInterest ? (
                 // Display interests for students
                 Array.isArray(profileData.subjectInterest) ? (
                   profileData.subjectInterest.map((interest, index) => (
@@ -515,7 +529,8 @@ const ProfileScreen = () => {
                 )
               ) : (
                 <Text className="text-gray-500">
-                  No {userRole === "teacher" ? "subjects" : "interests"} added yet
+                  No {userRole === 'teacher' ? 'subjects' : 'interests'} added
+                  yet
                 </Text>
               )}
             </View>
@@ -524,7 +539,7 @@ const ProfileScreen = () => {
       </View>
     </View>
   );
-}
+};
 
 // Helper component for detail items
 function DetailItem({ icon, label, value }) {
@@ -534,19 +549,15 @@ function DetailItem({ icon, label, value }) {
         {icon}
       </View>
       <View className="flex-1">
-        <Text className="text-sm font-medium text-gray-500">
-          {label}
-        </Text>
-        <Text className="text-base font-semibold text-gray-800">
-          {value}
-        </Text>
+        <Text className="text-sm font-medium text-gray-500">{label}</Text>
+        <Text className="text-base font-semibold text-gray-800">{value}</Text>
       </View>
     </View>
   );
 }
 
 // Helper component for stats boxes
-function StatBox({ label, value, suffix = "", color = "text-gray-800" }) {
+function StatBox({ label, value, suffix = '', color = 'text-gray-800' }) {
   return (
     <View className="flex-1 items-center bg-gray-50 p-3 rounded-xl mx-1">
       <Text className="text-sm font-medium text-gray-600">{label}</Text>
