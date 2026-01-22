@@ -35,10 +35,10 @@ export default function LiveHost() {
   const navigation = useNavigation();
   const { username, chatUserID, user } = useAuth();
 
-  // ✅ accept liveId (old param) OR conferenceID (new param)
+  //  accept liveId (old param) OR conferenceID (new param)
   const { liveId, conferenceID } = route.params || {};
 
-  // ✅ final room id for video conference
+  //  final room id for video conference
   const roomId = String(conferenceID || liveId || "").trim();
 
   const userID = useMemo(
@@ -80,7 +80,7 @@ export default function LiveHost() {
         appSign={Credential.appSign}
         userID={userID}
         userName={userName}
-        conferenceID={roomId}   // ✅ use liveId as conferenceID
+        conferenceID={roomId}   //  use liveId as conferenceID
         config={{
           onLeave: () => navigation.goBack(),
         }}

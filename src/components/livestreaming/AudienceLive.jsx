@@ -40,7 +40,7 @@ export default function AudienceLive() {
 
   const params = route?.params || {};
 
-  // ✅ Accept many possible param keys (so you won't get "ID missing")
+  //  Accept many possible param keys (so you won't get "ID missing")
   const rawConferenceId =
     params.conferenceID ||
     params.conferenceId ||
@@ -54,7 +54,7 @@ export default function AudienceLive() {
 
   const conferenceID = String(rawConferenceId).trim();
 
-  // ✅ Debug: see what you really received
+  //  Debug: see what you really received
   console.log("🎥 VideoConferenceAudience route.params:", params);
   console.log("🎥 VideoConferenceAudience conferenceID:", conferenceID);
 
