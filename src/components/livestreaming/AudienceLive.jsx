@@ -23,7 +23,8 @@ const AudienceLive = () => {
     return String(Date.now());
   }, [user?.uid, chatUserID]);
 
-  const finalUserName = params.userName || username || "Audience";
+  const userName = params.userName || username || "Audience";
+  console.log("👍 Username :",userName)
 
   if (!liveId) {
     return (
@@ -41,8 +42,8 @@ const AudienceLive = () => {
         appID={Credential.appId}
         appSign={Credential.appSign}
         userID={userID}
-        userName={finalUserName}
-        liveID={String(liveId)}
+        userName={userName}
+        liveID={liveId}
         config={{
           ...AUDIENCE_DEFAULT_CONFIG,
           onLeaveLiveStreaming: async () => {
