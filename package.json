@@ -20,6 +20,7 @@
     "@react-navigation/native-stack": "^7.10.1",
     "@react-navigation/stack": "^7.6.13",
     "@zegocloud/zego-uikit-prebuilt-live-streaming-rn": "^2.8.3",
+    "@zegocloud/zego-uikit-prebuilt-video-conference-rn": "^1.1.0",
     "@zegocloud/zego-uikit-rn": "^2.19.1",
     "@zegocloud/zimkit-rn": "^2.2.5",
     "firebase": "^12.7.0",
