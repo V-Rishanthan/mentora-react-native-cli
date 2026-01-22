@@ -8,7 +8,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthContextProvider, useAuth } from "./src/context/authContext";
-import { Home, BookOpen, Search, User,MessageSquareMore ,Video } from 'lucide-react-native';
+import { Home, BookOpen, Search, User,MessageSquareMore ,Video,Brain } from 'lucide-react-native';
 
 // Import screens
 import WelcomeScreen from "./src/screens/shared/WelcomeScreen";
@@ -88,7 +88,7 @@ function TabNavigator() {
     tabBarIcon: ({ focused, color }) => {
       let IconComponent;
       if (route.name === "Home") IconComponent = Home;
-      else if (route.name === "Chat") IconComponent = MessageSquareMore;
+      else if (route.name === "Chat") IconComponent = Brain;
       else if (route.name === "Audience") IconComponent = Video;
       else if (route.name === "Profile") IconComponent = User;
       // else if (route.name === "Audience") IconComponent = User;
