@@ -55,8 +55,8 @@ export default function AudienceLive() {
   const conferenceID = String(rawConferenceId).trim();
 
   //  Debug: see what you really received
-  console.log("🎥 VideoConferenceAudience route.params:", params);
-  console.log("🎥 VideoConferenceAudience conferenceID:", conferenceID);
+  console.log(" 💕💕💕💕😁😁😁😁😁😁VideoConferenceAudience route.params:", params);
+  console.log("💕💕💕💕💕💕🤣🤣🤣🤣 VideoConferenceAudience conferenceID:", conferenceID);
 
   const userID = useMemo(() => {
     if (user?.uid) return String(user.uid);
