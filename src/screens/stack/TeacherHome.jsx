@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -20,102 +21,181 @@ import {
   Tag,
   Users,
   MessageSquareText,
+  GraduationCap,
+  Layers,
 } from 'lucide-react-native';
 import { useAuth } from '../../context/authContext';
 
-// message-square-text
-
 const { width: screenWidth } = Dimensions.get('window');
-const CourseCard = ({ course, onViewDetails }) => {
+
+// ─── Dummy course folder images (rotate through them as fallback) ───────────
+const DUMMY_COURSE_IMAGES = [
+  require('../../assets/course/course-1.png'),
+  require('../../assets/course/course-2.png'),
+  require('../../assets/course/course-3.png'),
+  require('../../assets/course/course-4.png'),
+  require('../../assets/course/course-5.png'),
+];
+
+const getDummyImage = (index) => DUMMY_COURSE_IMAGES[index % DUMMY_COURSE_IMAGES.length];
+
+// ─── Course Card Component ───────────────────────────────────────────────────
+const CourseCard = ({ course, index, onViewDetails }) => {
+  const [imgError, setImgError] = useState(false);
+
+  // Resolve thumbnail: could be string URL or null/undefined
+  const hasRemoteThumb = !!course.thumbnail && typeof course.thumbnail === 'string' && !imgError;
+  const topicsCount = Array.isArray(course.content) ? course.content.length : 0;
+
   return (
     <TouchableOpacity
-      className="mb-6"
+      className="mb-6 rounded-[24px] overflow-hidden"
+      style={{
+        shadowColor: '#8681FB',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.15,
+        shadowRadius: 16,
+        elevation: 8,
+        backgroundColor: '#fff',
+      }}
       onPress={() => onViewDetails(course)}
-      activeOpacity={0.9}
+      activeOpacity={0.88}
     >
-      {/* Course Image Banner */}
-      <View className="relative rounded-t-[24px] overflow-hidden">
-        {course.thumbnail ? (
+      {/* ── Course Thumbnail ── */}
+      <View className="relative" style={{ height: 180 }}>
+        {hasRemoteThumb ? (
           <Image
             source={{ uri: course.thumbnail }}
-            className="w-full h-48"
+            style={{ width: '100%', height: 180 }}
             resizeMode="cover"
+            onError={() => setImgError(true)}
           />
         ) : (
-          <View className="w-full h-48 bg-gradient-to-r from-primary to-purple-600 items-center justify-center">
-            <BookOpen size={60} color="white" />
-          </View>
+          <Image
+            source={getDummyImage(index)}
+            style={{ width: '100%', height: 180 }}
+            resizeMode="cover"
+          />
         )}
 
+        {/* Dark overlay for text legibility */}
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 80,
+            background: 'transparent',
+          }}
+          className="bg-gradient-to-t from-black/60 to-transparent"
+        />
+
         {/* Category Badge */}
-        <View className="absolute top-4 left-4 bg-black/70 px-3 py-1.5 rounded-full">
-          <Text className="text-white text-xs font-bold">
-            {course.category || 'COURSE'}
+        <View className="absolute top-4 left-4 bg-white/90 px-3 py-1.5 rounded-full">
+          <Text className="text-primary text-[10px] font-black uppercase tracking-widest">
+            {course.category || 'Course'}
           </Text>
         </View>
+
+        {/* Topics Count Badge */}
+        {topicsCount > 0 && (
+          <View className="absolute top-4 right-4 bg-primary px-3 py-1.5 rounded-full flex-row items-center">
+            <Layers size={10} color="#fff" />
+            <Text className="text-white text-[10px] font-bold ml-1">
+              {topicsCount} {topicsCount === 1 ? 'Topic' : 'Topics'}
+            </Text>
+          </View>
+        )}
       </View>
 
-      {/* Course Content */}
-      <View className="bg-white p-6 rounded-b-[24px] border border-grayPro-100 shadow-sm">
+      {/* ── Course Details ── */}
+      <View className="bg-white p-5">
         {/* Title */}
-        <Text className="text-xl font-bold text-grayPro-800 mb-3">
+        <Text className="text-lg font-bold text-gray-800 mb-1" numberOfLines={2}>
           {course.title || 'Untitled Course'}
         </Text>
 
         {/* Description */}
-        {course.description && (
-          <Text
-            className="text-grayPro-600 text-sm mb-4 leading-5"
-            numberOfLines={3}
-          >
+        {!!course.description && course.description !== 'No description available' && (
+          <Text className="text-gray-500 text-sm mb-3 leading-5" numberOfLines={2}>
             {course.description}
           </Text>
         )}
 
-        {/* Course Info */}
-        <View className="flex-row items-center justify-between mb-5">
-          {/* Duration */}
-          <View className="flex-row items-center">
-            <Clock size={16} color="#6B7280" />
-            <Text className="text-grayPro-600 text-sm ml-2">
+        {/* Meta row */}
+        <View className="flex-row items-center mb-4">
+          <View className="flex-row items-center mr-5">
+            <Clock size={14} color="#8681FB" />
+            <Text className="text-gray-500 text-xs ml-1.5">
               {course.duration || 'Flexible'}
             </Text>
           </View>
 
-          {/* Category */}
-          <View className="flex-row items-center">
-            <Tag size={16} color="#6B7280" />
-            <Text className="text-grayPro-600 text-sm ml-2">
+          <View className="flex-row items-center mr-5">
+            <Tag size={14} color="#8681FB" />
+            <Text className="text-gray-500 text-xs ml-1.5">
               {course.category || 'General'}
             </Text>
           </View>
 
-          {/* Students (mock data) */}
           <View className="flex-row items-center">
-            <Users size={16} color="#6B7280" />
-            <Text className="text-grayPro-600 text-sm ml-2">0</Text>
+            <Users size={14} color="#8681FB" />
+            <Text className="text-gray-500 text-xs ml-1.5">
+              {course.totalStudents || 0} Students
+            </Text>
           </View>
         </View>
 
-        {/* View Course Button */}
+        {/* Topics preview */}
+        {topicsCount > 0 && (
+          <View className="bg-gray-50 rounded-xl p-3 mb-4">
+            <Text className="text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
+              Course Topics
+            </Text>
+            {course.content.slice(0, 3).map((topic, i) => (
+              <View key={i} className="flex-row items-center mb-1">
+                <View className="w-1.5 h-1.5 rounded-full bg-primary mr-2" />
+                <Text className="text-gray-600 text-xs flex-1" numberOfLines={1}>
+                  {typeof topic === 'string' ? topic : topic?.title || topic?.name || `Topic ${i + 1}`}
+                </Text>
+              </View>
+            ))}
+            {topicsCount > 3 && (
+              <Text className="text-primary text-xs font-semibold mt-1">
+                +{topicsCount - 3} more topics
+              </Text>
+            )}
+          </View>
+        )}
+
+        {/* Explore Button */}
         <TouchableOpacity
-          className="bg-primary flex-row items-center justify-center py-4 rounded-xl"
-          // onPress={() => onViewDetails(course)}
+          className="bg-primary flex-row items-center justify-center py-3.5 rounded-xl"
+          onPress={() => onViewDetails(course)}
         >
-          <Text className="text-white font-bold text-lg mr-2">
-            Explore Course
-          </Text>
-          <Play size={18} color="white" fill="white" />
+          <Text className="text-white font-bold text-sm mr-2">Explore Course</Text>
+          <Play size={15} color="white" fill="white" />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
 };
 
+// ─── Stats Card ─────────────────────────────────────────────────────────────
+const StatCard = ({ value, label, color }) => (
+  <View className="flex-1 items-center bg-white rounded-2xl py-4 mx-1.5 shadow-sm">
+    <Text style={{ color }} className="text-2xl font-black">
+      {value}
+    </Text>
+    <Text className="text-gray-500 text-xs mt-1 font-medium">{label}</Text>
+  </View>
+);
 
+// ─── Main TeacherHome Screen ─────────────────────────────────────────────────
 const TeacherHome = () => {
   const navigation = useNavigation();
-  const { user: authUser, userProfile } = useAuth();
+  const { user: authUser, userProfile, fetchUserProfile } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [teacherCourses, setTeacherCourses] = useState([]);
@@ -131,33 +211,63 @@ const TeacherHome = () => {
 
   // Build course list from teacher's subjects stored in Firestore
   useEffect(() => {
-    if (authUser && userProfile) {
-      console.log('Teacher Profile Data:', userProfile);
+    const loadCourses = async () => {
+      setLoading(true);
+      try {
+        // If userProfile not yet loaded, re-fetch it
+        let profile = userProfile;
+        if (!profile && authUser?.uid) {
+          profile = await fetchUserProfile(authUser.uid);
+        }
 
-      // subjects is an array of subject objects saved by addSubjectForUser
-      const subjectsList = Array.isArray(userProfile.subjects) ? userProfile.subjects : [];
+        if (profile) {
+          const subjectsList = Array.isArray(profile.subjects) ? profile.subjects : [];
+          console.log('Subjects from Firestore:', subjectsList);
 
-      const courses = subjectsList.map((subject, index) => ({
-        id: subject.subjectId || subject.subjectAddedAt || String(index),
-        title: subject.name || subject.subjectName || 'Untitled Subject',
-        category: subject.category || 'General',
-        description: subject.description || 'No description available',
-        duration: subject.duration ? `${subject.duration} hrs` : 'Flexible',
-        thumbnail: subject.thumbnail || null,
-        content: Array.isArray(subject.content) ? subject.content : [],
-        createdAt: subject.subjectAddedAt || new Date().toISOString(),
-      }));
+          const courses = subjectsList.map((subject, index) => ({
+            id: subject.subjectId || subject.subjectAddedAt || String(index),
+            title:
+              subject.name ||
+              subject.subjectName ||
+              subject.title ||
+              'Untitled Subject',
+            category: subject.category || 'General',
+            description:
+              subject.description ||
+              subject.about ||
+              null,
+            duration: subject.duration ? `${subject.duration} hrs` : 'Flexible',
+            // thumbnail is stored as a plain URL string
+            thumbnail:
+              typeof subject.thumbnail === 'string' && subject.thumbnail.length > 0
+                ? subject.thumbnail
+                : null,
+            // content/topics array
+            content: Array.isArray(subject.content)
+              ? subject.content
+              : Array.isArray(subject.topics)
+                ? subject.topics
+                : [],
+            totalStudents: subject.totalStudents || 0,
+            createdAt: subject.subjectAddedAt || subject.createdAt || new Date().toISOString(),
+          }));
 
-      setTeacherCourses(courses);
-      console.log('Teacher Courses:', courses);
-      setLoading(false);
-    } else if (!authUser) {
-      navigation.navigate('Login');
+          setTeacherCourses(courses);
+          console.log('Mapped teacher courses:', courses);
+        }
+      } catch (err) {
+        console.error('Error loading courses:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (authUser) {
+      loadCourses();
     } else {
-      setLoading(false);
+      navigation.navigate('Login');
     }
   }, [authUser, userProfile]);
-
 
   const handleViewCourseDetails = course => {
     navigation.navigate('CourseDetails', { courseId: course.id });
@@ -171,172 +281,163 @@ const TeacherHome = () => {
     navigation.navigate('Profile');
   };
 
-  const handleLiveStreaming = () =>{
-    navigation.navigate("LiveHome")
-  }
+  const handleLiveStreaming = () => {
+    navigation.navigate('LiveHome');
+  };
 
-  // User (Teacher) initial
+  // Teacher initial avatar
   const teacherInitial = useMemo(() => {
-    const n = (userProfile?.username || 'U').trim();
-    return n.length ? n[0].toUpperCase() : 'U';
+    const n = (userProfile?.username || 'T').trim();
+    return n.length ? n[0].toUpperCase() : 'T';
   }, [userProfile?.username]);
+
+  // Total topics across all courses
+  const totalTopics = useMemo(
+    () => teacherCourses.reduce((sum, c) => sum + (c.content?.length || 0), 0),
+    [teacherCourses],
+  );
 
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-white items-center justify-center">
-        <ActivityIndicator size="large" color="#4F46E5" />
-        <Text className="mt-4 text-grayPro-600">Loading your courses...</Text>
+        <ActivityIndicator size="large" color="#8681FB" />
+        <Text className="mt-4 text-gray-500 font-medium">Loading your courses...</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
       <ScrollView
-        className="px-5"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 30 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
       >
-        {/* Header Section */}
-        <View className="flex-row justify-between items-center mt-6">
-          <View>
-            <Text className="text-grayPro-400 text-base">Welcome back,</Text>
-            <Text className="text-2xl font-bold text-black">
-              {userProfile?.username || authUser?.displayName || 'Teacher'}
-            </Text>
-            {userProfile?.specialization && (
-              <Text className="text-grayPro-500 text-sm mt-1">
-                {userProfile.specialization}
+        {/* ── Header ── */}
+        <View className="bg-white px-5 pb-5 pt-4">
+          <View className="flex-row justify-between items-center">
+            <View className="flex-1">
+              <Text className="text-gray-400 text-sm">Welcome back,</Text>
+              <Text className="text-2xl font-black text-gray-900" numberOfLines={1}>
+                {userProfile?.username || authUser?.displayName || 'Teacher'}
               </Text>
-            )}
-          </View>
-          <View className="flex-row items-center">
-            {/* Notification */}
-            <TouchableOpacity
-              className="bg-secondary w-12 h-12 rounded-full items-center justify-center mr-3 border border-grayPro-100"
-              onPress={() => navigation.navigate('TeacherChat')}
-            >
-              <MessageSquareText size={22} color="#8681FB" />
-              <View className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border border-white" />
-            </TouchableOpacity>
-
-            {/* Live Streaming Screen */}
-            <TouchableOpacity
-             onPress={handleLiveStreaming}
-             className="bg-secondary w-12 h-12 rounded-full items-center justify-center mr-3 border border-grayPro-100">
-              <Video size={22} color="#8681FB" />
-              <View className="absolute -top-1 -right-1 w-3 h-3  rounded-full border border-white" />
-            </TouchableOpacity>
-
-            {/* Profile Image */}
-            <TouchableOpacity onPress={handleProfilePress}>
-              <View className="h-14 w-14 rounded-3xl bg-primary items-center justify-center shadow-2xl">
-                <Text className="text-white text-3xl font-black">
-                  {teacherInitial}
+              {!!userProfile?.specialization && (
+                <Text className="text-primary text-xs font-semibold mt-0.5">
+                  {userProfile.specialization}
                 </Text>
-              </View>
+              )}
+            </View>
 
-              
-            </TouchableOpacity>
+            <View className="flex-row items-center">
+              {/* Chat */}
+              <TouchableOpacity
+                className="bg-gray-100 w-11 h-11 rounded-full items-center justify-center mr-2"
+                onPress={() => navigation.navigate('TeacherChat')}
+              >
+                <MessageSquareText size={20} color="#8681FB" />
+                <View className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white" />
+              </TouchableOpacity>
+
+              {/* Live */}
+              <TouchableOpacity
+                onPress={handleLiveStreaming}
+                className="bg-gray-100 w-11 h-11 rounded-full items-center justify-center mr-2"
+              >
+                <Video size={20} color="#8681FB" />
+              </TouchableOpacity>
+
+              {/* Avatar */}
+              <TouchableOpacity
+                onPress={handleProfilePress}
+                className="w-11 h-11 rounded-full bg-primary items-center justify-center"
+              >
+                <Text className="text-white text-lg font-black">{teacherInitial}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Date */}
+          <View className="flex-row items-center mt-4">
+            <Calendar size={16} color="#8681FB" />
+            <Text className="ml-2 text-gray-600 text-sm font-medium">{formattedDate}</Text>
           </View>
         </View>
 
-        {/* Date Display */}
-        <View className="mt-8 mb-2">
-          <View className="flex-row items-center">
-            <Calendar size={20} color="#8681FB" />
-            <Text className="ml-3 text-grayPro-800 text-lg font-semibold">
-              {formattedDate}
+        {/* ── Stats Row ── */}
+        {teacherCourses.length > 0 && (
+          <View className="flex-row mx-5 mt-5">
+            <StatCard
+              value={teacherCourses.length}
+              label="Courses"
+              color="#8681FB"
+            />
+            <StatCard
+              value={teacherCourses.reduce((s, c) => s + (c.totalStudents || 0), 0)}
+              label="Students"
+              color="#22C55E"
+            />
+            <StatCard
+              value={totalTopics}
+              label="Topics"
+              color="#A855F7"
+            />
+          </View>
+        )}
+
+        {/* ── Section Header ── */}
+        <View className="flex-row justify-between items-center px-5 mt-7 mb-4">
+          <View>
+            <Text className="text-xl font-black text-gray-900">My Courses</Text>
+            <Text className="text-gray-400 text-xs mt-0.5">
+              {teacherCourses.length > 0
+                ? `${teacherCourses.length} course${teacherCourses.length > 1 ? 's' : ''} created`
+                : 'No courses yet'}
             </Text>
           </View>
+
+          <TouchableOpacity
+            className="flex-row items-center bg-primary px-4 py-2.5 rounded-full"
+            onPress={handleCreateCourse}
+          >
+            <Plus size={16} color="white" />
+            <Text className="text-white text-xs font-bold ml-1">Add Course</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Page Title */}
-        <View className="mt-8 mb-6">
-          <Text className="text-3xl font-bold text-black">My Courses</Text>
-          <Text className="text-grayPro-500 text-sm mt-2">
-            Manage and explore your teaching courses
-          </Text>
-        </View>
-
-        {/* Teacher's Created Courses */}
-        {teacherCourses.length > 0 ? (
-          teacherCourses.map((course, index) => (
-            <CourseCard
-              key={course.id || index}
-              course={course}
-              onViewDetails={handleViewCourseDetails}
-            />
-          ))
-        ) : (
-          <View className="mt-8 mb-6">
-            <View className="bg-gradient-to-r from-primary/10 to-purple-600/10 rounded-[32px] p-10 items-center justify-center">
-              <View className="w-24 h-24 bg-white rounded-full items-center justify-center mb-6 shadow-lg">
-                <BookOpen size={40} color="#4F46E5" />
+        {/* ── Course List ── */}
+        <View className="px-5">
+          {teacherCourses.length > 0 ? (
+            teacherCourses.map((course, index) => (
+              <CourseCard
+                key={course.id || index}
+                course={course}
+                index={index}
+                onViewDetails={handleViewCourseDetails}
+              />
+            ))
+          ) : (
+            /* ── Empty State ── */
+            <View className="mt-4 bg-white rounded-[28px] p-10 items-center shadow-sm">
+              <View className="w-24 h-24 bg-primary/10 rounded-full items-center justify-center mb-5">
+                <GraduationCap size={44} color="#8681FB" />
               </View>
-              <Text className="text-2xl font-bold text-grayPro-800 mb-3 text-center">
+              <Text className="text-xl font-black text-gray-800 mb-2 text-center">
                 No Courses Yet
               </Text>
-              <Text className="text-grayPro-600 text-center mb-8 leading-6">
-                Create your first course to share your knowledge and start
-                teaching students
+              <Text className="text-gray-400 text-sm text-center leading-6 mb-8">
+                Create your first course and start sharing your knowledge with students.
               </Text>
               <TouchableOpacity
-                className="bg-primary flex-row items-center px-8 py-4 rounded-full shadow-lg"
+                className="bg-primary flex-row items-center px-8 py-4 rounded-full"
                 onPress={handleCreateCourse}
               >
-                <Plus size={24} color="white" className="mr-3" />
-                <Text className="text-white font-bold text-lg">
+                <Plus size={20} color="white" />
+                <Text className="text-white font-bold text-base ml-2">
                   Create First Course
                 </Text>
               </TouchableOpacity>
             </View>
-          </View>
-        )}
-
-        {/* Create New Course Button (shown when there are courses) */}
-        {teacherCourses.length > 0 && (
-          <TouchableOpacity
-            className="border-2 border-dashed border-primary rounded-[24px] p-8 items-center justify-center bg-primary/5 mb-10 mt-4"
-            onPress={handleCreateCourse}
-            activeOpacity={0.8}
-          >
-            <View className="w-20 h-20 bg-primary/20 rounded-full items-center justify-center mb-5">
-              <Plus size={32} color="#4F46E5" />
-            </View>
-            <Text className="text-grayPro-800 font-bold text-xl mb-2">
-              Add New Course
-            </Text>
-            <Text className="text-grayPro-500 text-center text-sm">
-              Expand your teaching portfolio with another course
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Stats Section (optional) */}
-        {teacherCourses.length > 0 && (
-          <View className="bg-grayPro-50 rounded-[24px] p-6 mb-6">
-            <Text className="text-lg font-bold text-grayPro-800 mb-4">
-              Teaching Overview
-            </Text>
-            <View className="flex-row justify-between">
-              <View className="items-center">
-                <Text className="text-2xl font-bold text-primary">
-                  {teacherCourses.length}
-                </Text>
-                <Text className="text-grayPro-600 text-sm mt-1">Courses</Text>
-              </View>
-              <View className="items-center">
-                <Text className="text-2xl font-bold text-green-600">0</Text>
-                <Text className="text-grayPro-600 text-sm mt-1">Students</Text>
-              </View>
-              <View className="items-center">
-                <Text className="text-2xl font-bold text-purple-600">0</Text>
-                <Text className="text-grayPro-600 text-sm mt-1">Lessons</Text>
-              </View>
-            </View>
-          </View>
-        )}
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

@@ -78,7 +78,7 @@ const ProfileScreen = () => {
 
 
   const handleLogOut = () => {
-   
+
 
     Alert.alert('Logout', 'Are you sure you want to logout?', [
       { text: 'Cancel', style: 'cancel' },
@@ -91,10 +91,10 @@ const ProfileScreen = () => {
           if (res?.success) {
             console.warn(' Logged out, go to Login');
 
-            //  Force navigation
+            //  Force navigation — reset to Welcome (works for both roles)
             navigation.reset({
               index: 0,
-              routes: [{ name: 'Login' }],
+              routes: [{ name: 'Welcome' }],
             });
           } else {
             Alert.alert('Error', res?.error || 'Failed to logout');
@@ -118,11 +118,11 @@ const ProfileScreen = () => {
     }
   };
 
-   // User (Teacher || Student) initial
-    const initial = useMemo(() => {
-      const n = (profileData?.username || 'U').trim();
-      return n.length ? n[0].toUpperCase() : 'U';
-    }, [profileData?.username]);
+  // User (Teacher || Student) initial
+  const initial = useMemo(() => {
+    const n = (profileData?.username || 'U').trim();
+    return n.length ? n[0].toUpperCase() : 'U';
+  }, [profileData?.username]);
 
   if (loading) {
     return (
@@ -375,16 +375,17 @@ const ProfileScreen = () => {
                     Teaching Subjects
                   </Text>
                   <View className="flex-row flex-wrap gap-2">
-                    {profileData.subjects.map((subject, index) => (
-                      <View
-                        key={index}
-                        className="bg-purple-100 px-4 py-2 rounded-full"
-                      >
-                        <Text className="text-purple-700 font-medium">
-                          {subject}
-                        </Text>
-                      </View>
-                    ))}
+                    {profileData.subjects.map((subject, index) => {
+                      const label =
+                        typeof subject === 'string'
+                          ? subject
+                          : subject?.name || subject?.subjectName || subject?.title || 'Subject';
+                      return (
+                        <View key={index} className="bg-purple-100 px-4 py-2 rounded-full">
+                          <Text className="text-purple-700 font-medium">{label}</Text>
+                        </View>
+                      );
+                    })}
                   </View>
                 </View>
               )}
@@ -497,16 +498,19 @@ const ProfileScreen = () => {
             <View className="flex-row flex-wrap gap-3">
               {/* Display subjects for teachers */}
               {userRole === 'teacher' &&
-              profileData?.subjects &&
-              profileData.subjects.length > 0 ? (
-                profileData.subjects.map((subject, index) => (
-                  <View
-                    key={index}
-                    className="bg-primary/10 px-4 py-3 rounded-full"
-                  >
-                    <Text className="text-primary font-medium">{subject}</Text>
-                  </View>
-                ))
+                profileData?.subjects &&
+                profileData.subjects.length > 0 ? (
+                profileData.subjects.map((subject, index) => {
+                  const label =
+                    typeof subject === 'string'
+                      ? subject
+                      : subject?.name || subject?.subjectName || subject?.title || 'Subject';
+                  return (
+                    <View key={index} className="bg-primary/10 px-4 py-3 rounded-full">
+                      <Text className="text-primary font-medium">{label}</Text>
+                    </View>
+                  );
+                })
               ) : userRole === 'student' && profileData?.subjectInterest ? (
                 // Display interests for students
                 Array.isArray(profileData.subjectInterest) ? (
