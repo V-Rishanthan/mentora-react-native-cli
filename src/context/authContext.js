@@ -507,6 +507,37 @@ export const AuthContextProvider = ({ children }) => {
     console.log('selectedRole:', role);
   };
 
+  // Update teacher profile (merge fields) for existing teachers
+  const updateTeacherProfile = async teacherData => {
+    try {
+      const uid = user?.uid;
+      if (!uid) {
+        return { success: false, error: 'User not authenticated' };
+      }
+
+      const teacherRef = doc(db, 'users', uid);
+
+      // Merge provided fields into existing document
+      await setDoc(
+        teacherRef,
+        {
+          ...teacherData,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true },
+      );
+
+      // Refresh profile in context
+      const updatedProfile = await fetchUserProfile(uid);
+      setUserProfile(updatedProfile);
+
+      return { success: true, data: updatedProfile };
+    } catch (error) {
+      console.error('Error updating teacher profile:', error);
+      return { success: false, error: error.message || 'Update failed' };
+    }
+  };
+
   // Clear role
   const clearRole = () => {
     setSelectedRole(null);
@@ -530,6 +561,7 @@ export const AuthContextProvider = ({ children }) => {
         fetchCourseData,
         courseData,
         loadingCourses,
+        updateTeacherProfile,
 
         // Testing
         username,

@@ -1,4 +1,4 @@
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Brain } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
@@ -15,21 +15,76 @@ import {
 } from 'react-native';
 import { useAuth } from '../../context/authContext';
 import { getGeminiResponse } from '../../services/geminiService';
+import { uploadImageForUser } from '../../services/storageService';
+import { addSubjectForUser } from '../../services/teacherService';
 import {
   clearTeacherData,
   getTeacherData,
-} from '../../utils/teacherRegistrationStore'; // Import storage utils
+} from '../../utils/teacherRegistrationStore';
 import Button from '../../components/Button';
 import SectionTitle from '../../components/SectionTitle';
 
 export default function TeacherSubjectSuggestion() {
-  const { registerTeacher } = useAuth();
+  const { user, userProfile, updateTeacherProfile } = useAuth();
   const [userInput, setUserInput] = useState('');
   const [aiOutput, setAiOutput] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selected, setSelected] = useState([]);
   const [registrationLoading, setRegistrationLoading] = useState(false);
   const [previousData, setPreviousData] = useState(null); // Store previous screens data
+  const route = useRoute();
+  const subjectId = route?.params?.subjectId || null;
+
+  const loadPreviousData = async () => {
+    try {
+      const savedData = await getTeacherData();
+      console.log('Loaded previous data from AsyncStorage:', savedData);
+
+      if (Object.keys(savedData).length === 0) {
+        // no saved local data; fall back to profile for existing teacher
+        if (userProfile && userProfile.role === 'teacher') {
+          setPreviousData(userProfile);
+
+          const subjectList = Array.isArray(userProfile.subjects) ? userProfile.subjects : [];
+          const existingSubject = subjectId
+            ? subjectList.find(s => s.subjectAddedAt === subjectId || s.subjectId === subjectId || s.name === subjectId)
+            : subjectList[0];
+
+          const existingContent = (existingSubject && Array.isArray(existingSubject.content)) ? existingSubject.content : [];
+          const normalized = existingContent.map(c => (typeof c === 'string' ? { title: c } : { title: c.title }));
+          setSelected(normalized);
+          if (existingSubject?.name || existingSubject?.subjectName) {
+            setUserInput(existingSubject.name || existingSubject.subjectName);
+          }
+          return;
+        }
+
+        Alert.alert('No Data Found', 'Please go back and fill the registration form.');
+        router.back();
+        return;
+      }
+
+      setPreviousData(savedData);
+
+      if (savedData.subjects && Array.isArray(savedData.subjects)) {
+        const subjectList = savedData.subjects;
+        const currentSubject = subjectId
+          ? subjectList.find(s => s.subjectAddedAt === subjectId || s.subjectId === subjectId || s.name === subjectId)
+          : subjectList[subjectList.length - 1];
+
+        const existingContent = (currentSubject && Array.isArray(currentSubject.content)) ? currentSubject.content : [];
+        const normalized = existingContent.map(c => (typeof c === 'string' ? { title: c } : { title: c.title }));
+        setSelected(normalized);
+        if (currentSubject?.name || currentSubject?.subjectName) {
+          setUserInput(currentSubject.name || currentSubject.subjectName);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading previous data:', error);
+      Alert.alert('Error', 'Failed to load your data. Please start over.');
+      router.back();
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!userInput) return;
@@ -64,7 +119,8 @@ Constraints:
       console.log('Gemini Response:', result);
       setAiOutput(parsedList);
     } catch (err) {
-      setAiOutput('Error: Could not reach the AI.');
+      setAiOutput([]);
+      Alert.alert('AI Unavailable', 'Could not reach the AI. Please try again later.');
     } finally {
       setIsLoading(false);
     }
@@ -78,156 +134,118 @@ Constraints:
     loadPreviousData();
   }, []);
 
-  const loadPreviousData = async () => {
-    try {
-      const savedData = await getTeacherData();
-      console.log('Loaded previous data from AsyncStorage:', savedData);
-
-      if (Object.keys(savedData).length === 0) {
-        Alert.alert(
-          'No Data Found',
-          'Please go back and fill the registration form.',
-        );
-        router.back();
-        return;
-      }
-
-      setPreviousData(savedData);
-
-      // Load previously saved subjects if any
-      if (savedData.subjects && Array.isArray(savedData.subjects)) {
-        setSelected(savedData.subjects);
-      }
-    } catch (error) {
-      console.error('Error loading previous data:', error);
-      Alert.alert('Error', 'Failed to load your data. Please start over.');
-      router.back();
-    }
-  };
-
-  // THIS IS THE MAIN FUNCTION - COMBINES BOTH DATA SOURCES
   const handleCompleteRegistration = async () => {
-    // Check if we have previous data
-    if (!previousData) {
-      Alert.alert('Error', 'No registration data found. Please start over.');
-      return;
-    }
-
-    // Validate required fields from previous screens
-    const requiredFields = [
-      'username',
-      'email',
-      'password',
-      'qualification',
-      'yearsOfExperience',
-      'specialization',
-      'bio',
-      'subjectName',
-      'category',
-      'duration',
-      'description',
-      'thumbnail',
-    ];
-    const missingFields = requiredFields.filter(
-      field => !previousData[field]?.trim(),
-    );
-
-    if (missingFields.length > 0) {
-      Alert.alert(
-        'Missing Information',
-        `Please go back and fill: ${missingFields.map(f => f.replace(/([A-Z])/g, ' $1').trim()).join(', ')}`,
-      );
-      return;
-    }
-
-    // Check if subjects are selected
     if (selected.length === 0) {
-      Alert.alert(
-        'Subjects Required',
-        'Please add at least one subject you teach.',
-      );
+      Alert.alert('Topics Required', 'Please select at least one topic for this subject.');
       return;
     }
-
-    // LOG ALL DATA BEFORE REGISTRATION
-    console.log('======= ALL TEACHER REGISTRATION DATA =======');
-    console.log('📋 FROM ASYNC STORAGE (PREVIOUS SCREENS):');
-    console.log('Username:', previousData.username);
-    console.log('Email:', previousData.email);
-    console.log(
-      'Password:',
-      previousData.password ? '*** (hidden)' : 'Not provided',
-    );
-    console.log('Qualification:', previousData.qualification);
-    console.log('Years of Experience:', previousData.yearsOfExperience);
-    console.log('Specialization:', previousData.specialization);
-    console.log('Bio:', previousData.bio);
-    console.log('Subject Name:', previousData.subjectName);
-    console.log('Category:', previousData.category);
-    console.log('Duration:', previousData.duration);
-    console.log('Description:', previousData.description);
-    console.log('Thumbnail:', previousData.thumbnail);
-    console.log('');
 
     setRegistrationLoading(true);
 
     try {
-      //  COMBINE BOTH DATA SOURCES:
-      // 1. Data from AsyncStorage (previous screens)
-      // 2. Data from current screen (selected subjects)
+      const uid = user?.uid;
+      if (!uid) {
+        Alert.alert('Error', 'You must be logged in to save a subject.');
+        return;
+      }
 
-      const completeTeacherData = {
-        // From AsyncStorage (Screen 1 & 2):
-        username: previousData.username,
-        email: previousData.email,
-        password: previousData.password,
-        qualification: previousData.qualification,
-        yearsOfExperience: previousData.yearsOfExperience,
-        specialization: previousData.specialization,
-        bio: previousData.bio,
+      // Check if the subject already exists in the teacher's Firestore profile
+      const subjectList = Array.isArray(userProfile?.subjects) ? userProfile.subjects : [];
+      const existingIdx = subjectList.findIndex(
+        s => s.subjectAddedAt === subjectId || s.subjectId === subjectId,
+      );
 
-        // subject related info
-        subjectName: previousData.subjectName,
-        category: previousData.category,
-        duration: previousData.duration,
-        description: previousData.description,
-        thumbnail: previousData.thumbnail,
+      if (existingIdx !== -1) {
+        // ── PATH A: Update topics on an already-saved Firestore subject ──
+        const existingContent = Array.isArray(subjectList[existingIdx].content)
+          ? subjectList[existingIdx].content
+          : [];
+        const existingNormalized = existingContent.map(c =>
+          typeof c === 'string' ? { title: c } : { title: c.title },
+        );
 
-        // From current screen state (Screen 3):
-        subjects: selected,
-      };
+        // Merge: keep existing, append new unique ones
+        const newItems = selected.filter(
+          s => !existingNormalized.find(e => e.title === s.title),
+        );
+        const mergedContent = [...existingNormalized, ...newItems];
 
-      // PASS COMBINED DATA TO AUTH CONTEXT
-      const result = await registerTeacher(completeTeacherData);
-      console.log(result);
+        const updatedSubjects = subjectList.slice();
+        updatedSubjects[existingIdx] = {
+          ...updatedSubjects[existingIdx],
+          content: mergedContent,
+        };
 
-      if (result.success) {
-        console.log('Teacher registration successful!');
-        Alert.alert(
-          'Registration Successful!',
-          'Your teacher account has been created successfully. Welcome to Mentora!',
-          [
+        const res = await updateTeacherProfile({ subjects: updatedSubjects });
+
+        if (res.success) {
+          setSelected(mergedContent);
+          Alert.alert('Updated!', 'Subject topics have been updated.', [
             {
-              text: 'Continue',
-              onPress: () => {
-                router.reset({
-                  index: 0,
-                  routes: [{ name: 'TeacherHome' }],
-                });
-              },
+              text: 'Go to Home',
+              onPress: () =>
+                router.reset({ index: 0, routes: [{ name: 'TeacherHome' }] }),
             },
-          ],
-        );
+          ]);
+        } else {
+          Alert.alert('Update Failed', res.error || 'Could not update subject topics.');
+        }
       } else {
-        Alert.alert(
-          'Registration Failed',
-          result.error || 'Something went wrong. Please try again.',
-        );
-        console.error('Registration error:', result.error);
+        // ── PATH B: Brand-new subject (just created in AddSubject) — save to Firestore ──
+        const savedData = await getTeacherData();
+        const subjects = Array.isArray(savedData.subjects) ? savedData.subjects : [];
+        // Pick the subject matching subjectId, or the last one added
+        const subjectFromStorage =
+          subjects.find(s => s.subjectAddedAt === subjectId) ||
+          subjects[subjects.length - 1] ||
+          null;
+
+        if (!subjectFromStorage) {
+          Alert.alert('Error', 'Subject data not found. Please go back and fill the subject form.');
+          return;
+        }
+
+        // Upload thumbnail if it's a local file path
+        let thumbnailUrl = subjectFromStorage.thumbnail || '';
+        if (thumbnailUrl && !thumbnailUrl.startsWith('http')) {
+          try {
+            thumbnailUrl = await uploadImageForUser(uid, thumbnailUrl);
+          } catch (uploadErr) {
+            console.warn('Thumbnail upload failed, continuing without it:', uploadErr);
+            thumbnailUrl = '';
+          }
+        }
+
+        const subjectObj = {
+          name: subjectFromStorage.name || userInput || '',
+          category: subjectFromStorage.category || '',
+          duration: subjectFromStorage.duration || '',
+          description: subjectFromStorage.description || '',
+          thumbnail: thumbnailUrl,
+          subjectAddedAt: subjectFromStorage.subjectAddedAt || new Date().toISOString(),
+          content: selected,
+        };
+
+        // Save to Firestore: subjects/{docId} subcollection + append to user doc subjects array
+        const addRes = await addSubjectForUser(uid, subjectObj, thumbnailUrl);
+        if (!addRes.success) {
+          throw addRes.error || new Error('Failed to save subject to Firestore');
+        }
+
+        // Clear temp AsyncStorage registration data
+        await clearTeacherData();
+
+        Alert.alert('Subject Added!', 'Your subject has been saved successfully.', [
+          {
+            text: 'Go to Home',
+            onPress: () =>
+              router.reset({ index: 0, routes: [{ name: 'TeacherHome' }] }),
+          },
+        ]);
       }
     } catch (error) {
-      console.error('Unexpected error during registration:', error);
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+      console.error('handleCompleteRegistration error:', error);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
     } finally {
       setRegistrationLoading(false);
     }
@@ -306,14 +324,11 @@ Constraints:
                     className="bg-primary/10 border border-primary/20 px-3 py-1 rounded-full flex-row items-center"
                   >
                     <Text className="text-primary font-light text-xs mr-2">
-                      {selectedSubject}
+                      {selectedSubject.title}
                     </Text>
                     <TouchableOpacity
                       onPress={() => {
-                        // REMOVE logic: Filter out the clicked subject
-                        setSelected(
-                          selected.filter(item => item !== selectedSubject),
-                        );
+                        setSelected(selected.filter(item => item.title !== selectedSubject.title));
                       }}
                     >
                       <Text className="text-primary font-bold">✕</Text>
@@ -337,12 +352,11 @@ Constraints:
                     key={idx}
                     className="mt-2 flex-row items-center  p-3 rounded-xl "
                     onPress={() => {
-                      // Logic to "select" this tag
-                      if (!selected.includes(subject)) {
-                        setSelected(prev => [...prev, subject]);
-                      }
+                      const title = subject;
 
-                      console.log('Selected:', subject);
+                      if (!selected.find(s => s.title === title)) {
+                        setSelected(prev => [...prev, { title }]);
+                      }
                     }}
                   >
                     <Image

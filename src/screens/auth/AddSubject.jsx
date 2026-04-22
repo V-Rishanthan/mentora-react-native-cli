@@ -29,7 +29,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {saveTeacherData} from "../../utils/teacherRegistrationStore"
+import { saveTeacherData, getTeacherData } from "../../utils/teacherRegistrationStore"
 import Button from "../../components/Button";
 import { Animated } from "react-native";
 
@@ -288,23 +288,31 @@ useEffect(() => {
 
     setLoading(true);
 
-     try {
-      // Save to AsyncStorage
-      await saveTeacherData({
-        subjectName: formData.subjectName.trim(),
+    try {
+      // Build structured subject object
+      const subjectId = new Date().toISOString();
+      const subjectObj = {
+        subjectAddedAt: subjectId,
+        name: formData.subjectName.trim(),
         category: formData.category.trim(),
         duration: formData.duration,
         description: formData.description.trim(),
         thumbnail: formData.thumbnail,
-        // Add timestamp for uniqueness
-        subjectAddedAt: new Date().toISOString(),
-      });
+        content: [],
+      };
 
-     navigation.push("TeacherSubjectSuggestion");
+      // Append to saved subjects array
+      const existing = await getTeacherData();
+      const subjects = Array.isArray(existing.subjects) ? existing.subjects : [];
+      const updatedSubjects = [...subjects, subjectObj];
 
+      await saveTeacherData({ subjects: updatedSubjects });
+
+      // Navigate to AI suggestion screen for this subject
+      navigation.push('TeacherSubjectSuggestion', { subjectId });
     } catch (error) {
-      console.error("Error saving subject:", error);
-      Alert.alert("Error", "Failed to save subject. Please try again.");
+      console.error('Error saving subject:', error);
+      Alert.alert('Error', 'Failed to save subject. Please try again.');
     } finally {
       setLoading(false);
     }

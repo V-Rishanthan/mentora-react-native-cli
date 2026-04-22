@@ -162,22 +162,22 @@ function AppNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {isAuthenticated ? (
-        // Authenticated users - Show tabs or appropriate screen based on role
+        // Authenticated users
         <>
           {userProfile?.role === 'teacher' ? (
             // Teacher-specific screens
             <>
               <Stack.Screen name="TeacherHome" component={TeacherHome} />
-              <Stack.Screen name="TeacherSubjectSuggestion" component={TeacherSubjectSuggestion} />
               <Stack.Screen name="AddSubject" component={AddSubject} />
+              <Stack.Screen name="TeacherSubjectSuggestion" component={TeacherSubjectSuggestion} />
               <Stack.Screen name="TeacherChat" component={TeacherChat} />
             </>
           ) : (
             // Student/regular user - Show tabs
             <Stack.Screen name="MainTabs" component={TabNavigator} />
           )}
-          
-          {/* Common authenticated screens accessible from anywhere */}
+
+          {/* Common authenticated screens */}
           <Stack.Screen name="Profile" component={ProfileScreen} />
         </>
       ) : (
@@ -189,13 +189,9 @@ function AppNavigator() {
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen name="RegisterTeachers" component={RegisterTeachersScreen} />
-          {/* <Stack.Screen name="RegisterTeachers_2" component={RegisterTeachers2Screen} /> */}
           <Stack.Screen name="RegisterTeachers2" component={RegisterTeachers2} />
-          <Stack.Screen name="TeacherSubjectSuggestion" component={TeacherSubjectSuggestion} />
           <Stack.Screen name="AddSubject" component={AddSubject} />
-          
-          
-         
+          <Stack.Screen name="TeacherSubjectSuggestion" component={TeacherSubjectSuggestion} />
         </>
       )}
       <Stack.Screen name="CourseDetails" component={CourseDetails} />

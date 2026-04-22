@@ -115,7 +115,7 @@ const CourseCard = ({ course, onViewDetails }) => {
 
 const TeacherHome = () => {
   const navigation = useNavigation();
-  const { user: authUser, userProfile, selectedRole } = useAuth();
+  const { user: authUser, userProfile } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [teacherCourses, setTeacherCourses] = useState([]);
@@ -129,59 +129,35 @@ const TeacherHome = () => {
     year: 'numeric',
   }).format(currentDate);
 
-  // Extract teacher's courses from profile data
+  // Build course list from teacher's subjects stored in Firestore
   useEffect(() => {
-    if (authUser && userProfile && selectedRole === 'teacher') {
+    if (authUser && userProfile) {
       console.log('Teacher Profile Data:', userProfile);
 
-      // Create course data from teacher's profile
-      const courses = [];
+      // subjects is an array of subject objects saved by addSubjectForUser
+      const subjectsList = Array.isArray(userProfile.subjects) ? userProfile.subjects : [];
 
-      // If teacher has subjectName from AddSubject screen, create a course from it
-      if (userProfile.subjectName) {
-        courses.push({
-          id: '1',
-          title: userProfile.subjectName,
-          category: userProfile.category || 'General',
-          description: userProfile.description || 'No description available',
-          duration: userProfile.duration || 'Flexible hours',
-          thumbnail: userProfile.thumbnail || null,
-          createdAt: userProfile.subjectAddedAt || new Date().toISOString(),
-        });
-      }
-
-      // If teacher has subjects array (from TeacherSubjectSuggestion screen)
-      if (userProfile.subjectName && Array.isArray(userProfile.subjectName)) {
-        userProfile.subjectName.forEach((subject, index) => {
-          courses.push({
-            id: `subject-${index + 2}`,
-            title: subject,
-            category: userProfile.specialization || 'General',
-            description: `Comprehensive course covering all aspects of ${subject}. Perfect for beginners and intermediate learners.`,
-            duration: '12 hours',
-            thumbnail: `https://source.unsplash.com/random/400x300/?${subject.toLowerCase().replace(/\s+/g, ',')}`,
-            createdAt: new Date().toISOString(),
-          });
-        });
-      }
-
-      // If teacher has other course data in profile
-      if (userProfile.courses && Array.isArray(userProfile.courses)) {
-        courses.push(...userProfile.courses);
-      }
+      const courses = subjectsList.map((subject, index) => ({
+        id: subject.subjectId || subject.subjectAddedAt || String(index),
+        title: subject.name || subject.subjectName || 'Untitled Subject',
+        category: subject.category || 'General',
+        description: subject.description || 'No description available',
+        duration: subject.duration ? `${subject.duration} hrs` : 'Flexible',
+        thumbnail: subject.thumbnail || null,
+        content: Array.isArray(subject.content) ? subject.content : [],
+        createdAt: subject.subjectAddedAt || new Date().toISOString(),
+      }));
 
       setTeacherCourses(courses);
       console.log('Teacher Courses:', courses);
       setLoading(false);
-    } else if (authUser && selectedRole !== 'teacher') {
-      // Not a teacher, redirect or show message
-      navigation.navigate('StudentHome');
     } else if (!authUser) {
       navigation.navigate('Login');
     } else {
       setLoading(false);
     }
-  }, [authUser, userProfile, selectedRole]);
+  }, [authUser, userProfile]);
+
 
   const handleViewCourseDetails = course => {
     navigation.navigate('CourseDetails', { courseId: course.id });
