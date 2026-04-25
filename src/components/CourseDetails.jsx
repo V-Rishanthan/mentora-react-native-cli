@@ -173,16 +173,22 @@ export default function CourseDetails({ navigation, route }) {
                 Subjects Covered
               </Text>
               <View className="flex-row flex-wrap">
-                {subjects.map((subject, idx) => (
-                  <View
-                    key={idx}
-                    className="bg-gray-100 px-3 py-2 rounded-lg mr-2 mb-2"
-                  >
-                    <Text className="text-gray-600 font-outfit-medium text-sm">
-                      {subject}
-                    </Text>
-                  </View>
-                ))}
+                {subjects.map((subject, idx) => {
+                  const label =
+                    typeof subject === 'string'
+                      ? subject
+                      : subject?.name || subject?.subjectName || subject?.title || 'Subject';
+                  return (
+                    <View
+                      key={idx}
+                      className="bg-gray-100 px-3 py-2 rounded-lg mr-2 mb-2"
+                    >
+                      <Text className="text-gray-600 font-outfit-medium text-sm">
+                        {label}
+                      </Text>
+                    </View>
+                  );
+                })}
               </View>
             </View>
           )}
@@ -194,23 +200,29 @@ export default function CourseDetails({ navigation, route }) {
             </Text>
 
             <View className="space-y-2">
-              {subjects.map((lesson, index) => (
-                <View
-                  key={index}
-                  className="flex-row items-center justify-between py-3 px-4 bg-grayPro-50 rounded-lg"
-                >
-                  <View className="flex-row items-center">
-                    <View className="w-6 h-6 bg-primary/10 rounded items-center justify-center mr-3">
-                      <Text className="text-primary text-xs font-outfit-semibold">
-                        {index + 1}
+              {subjects.map((lesson, index) => {
+                const label =
+                  typeof lesson === 'string'
+                    ? lesson
+                    : lesson?.name || lesson?.subjectName || lesson?.title || `Lesson ${index + 1}`;
+                return (
+                  <View
+                    key={index}
+                    className="flex-row items-center justify-between py-3 px-4 bg-grayPro-50 rounded-lg"
+                  >
+                    <View className="flex-row items-center">
+                      <View className="w-6 h-6 bg-primary/10 rounded items-center justify-center mr-3">
+                        <Text className="text-primary text-xs font-outfit-semibold">
+                          {index + 1}
+                        </Text>
+                      </View>
+                      <Text className="text-grayPro-700 font-outfit-regular">
+                        {label}
                       </Text>
                     </View>
-                    <Text className="text-grayPro-700 font-outfit-regular">
-                      {lesson}
-                    </Text>
                   </View>
-                </View>
-              ))}
+                );
+              })}
             </View>
           </View>
 
